@@ -1,0 +1,85 @@
+
+.markdown-node {
+  background: rgba(255, 255, 255, 1);
+  border-radius: 8px;
+  padding: 5px 10px 10px 10px;
+  min-width: 180px;
+  border: 2px solid #000;
+  color: #333;
+  font-weight: 500;
+  font-size: 8px;
+  line-height: 12px;
+  width: 250px;
+  user-select: text;
+  cursor: text;
+}
+
+.markdown-node--selected {
+  box-shadow: 0 2px 20px rgba(24, 144, 255, 0.35);
+}
+
+.drag-handle__custom {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  cursor: grab;
+  font-size: 14px;
+  line-height: 16px;
+  color: rgba(1, 149, 252, 0.77);
+  text-align: center;
+  vertical-align: top;
+  position: absolute;
+  right: 5px;
+  top: 2px;
+}
+
+/* 高亮样式 */
+.md-highlight {
+  background: #fff176;     /* 柔和黄 */
+  border-radius: 2px;
+  padding: 0 .06em;
+}
+
+/* 选区颜色（可选，避免“其实选上了但看不出来”） */
+.markdown-node__content ::selection {
+  background: rgba(147, 197, 253, 0.45);
+}
+
+/* components/KnowlegeGraph.css —— 追加 */
+:root {
+  --kg-q-color: #1353dd;
+  --kg-q-weight: 700; /* 600/700 视视觉设计 */
+  --kg-q-size: 14px;
+  --kg-q-line: 1.5;
+  --kg-q-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --kg-q-max-lines: 3;
+}
+
+.kg-q {
+  color: var(--kg-q-color);
+  font-weight: var(--kg-q-weight);
+  font-size: var(--kg-q-size);
+  line-height: var(--kg-q-line);
+  font-family: var(--kg-q-font);
+
+  /* 多行省略（可选） */
+  display: -webkit-box;
+  -webkit-line-clamp: var(--kg-q-max-lines);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kg-q p {
+  color: var(--kg-q-color);
+  font-weight: var(--kg-q-weight);
+  font-size: var(--kg-q-size);
+  line-height: var(--kg-q-line);
+  font-family: var(--kg-q-font);
+
+  /* 多行省略（可选） */
+  display: -webkit-box;
+  -webkit-line-clamp: var(--kg-q-max-lines);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+

@@ -1,0 +1,18 @@
+# Frontend standalone build and serve by Nginx (static)
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package.json yarn.lock* ./
+RUN corepack enable && corepack prepare yarn@stable --activate && \
+	if [ -f yarn.lock ]; then yarn install --network-timeout 600000 --immutable; else yarn install --network-timeout 600000; fi
+COPY index.html ./
+COPY tsconfig*.json ./
+COPY tailwind.config.js ./
+COPY postcss.config.cjs ./
+COPY vite.config.ts ./
+COPY public ./public
+COPY src ./src
+RUN yarn build
+
+# Export build artifacts via volume mount
+# (docker-compose will mount /app/dist into a named volume consumed by nginx)
+CMD ["sh", "-c", "cp -r dist /export && sleep infinity"]

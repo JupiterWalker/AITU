@@ -1,0 +1,39 @@
+# Node / frontend
+node_modules
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+.dist
+/dist
+/build
+
+# Vite cache
+vite.cache
+
+# Python
+__pycache__
+*.py[cod]
+*.pyo
+*.pyd
+*.pytest_cache
+.mypy_cache
+.venv
+.env
+backend/llm/.env
+
+# OS / editor
+.DS_Store
+.idea
+.vscode
+*.swp
+
+# Git
+.git
+.gitignore
+
+# Coverage / reports
+coverage
+htmlcov
+
+# Misc
+*.log

@@ -2,15 +2,63 @@
 import KnowledgeGraph from "./components/KnowledgeGraph.tsx";
 import {ReactFlowProvider} from "@xyflow/react";
 import './App.css'
-import React, { useState } from "react"; // 或 './App.css'
+import React, { useState, useRef } from "react"; // 或 './App.css'
 
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [lastExport, setLastExport] = useState<any | null>(null);
+  const graphApiRef = useRef<{ exportGraph: () => any; importGraph: (p:any)=>void } | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const downloadJSON = (data: any, filename: string) => {
+    console.log("触发 downloadJSON： ", data)
+    try {
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      // Safari 需要元素在 DOM 中
+      document.body.appendChild(a);
+      a.click();
+      // 延迟 revoke 避免某些浏览器取消下载
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        a.remove();
+      }, 1000);
+    } catch (e) {
+      console.error('下载失败', e);
+    }
+  };
+
+  function triggerImportChooser() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const json = JSON.parse(String(ev.target?.result || ''));
+        graphApiRef.current?.importGraph(json);
+      } catch(err) {
+        console.error('导入失败', err);
+      }
+    };
+    reader.readAsText(file);
+  }
+
   return (
     <div style={{width: '100vw', height: '100vh', position: 'relative'}}>
       <ReactFlowProvider>
-        <KnowledgeGraph />
+        <KnowledgeGraph
+          onGraphExport={(p) => setLastExport(p)}
+          onGraphImport={(p)=> { console.log('已导入图', p); }}
+          onRegisterApi={(api) => { graphApiRef.current = api; }}
+        />
       </ReactFlowProvider>
       <div style={{position:'absolute', top:12, left:12, zIndex:1000}}>
         <button
@@ -40,11 +88,27 @@ function App() {
             minWidth:140,
             boxShadow:'0 4px 12px rgba(0,0,0,0.12)'
           }}>
-            <div style={{padding:'6px 14px', cursor:'pointer', fontSize:14}} role="menuitem">Open</div>
-            <div style={{padding:'6px 14px', cursor:'pointer', fontSize:14}} role="menuitem">Save to…</div>
+            <div
+              style={{padding:'6px 14px', cursor:'pointer', fontSize:14}}
+              role="menuitem"
+              onClick={() => { triggerImportChooser(); setMenuOpen(false); }}
+            >Open</div>
+            <div
+              style={{padding:'6px 14px', cursor:'pointer', fontSize:14}}
+              role="menuitem"
+              onClick={() => {
+                console.log("点击 save to")
+                const payload = graphApiRef.current?.exportGraph();
+                if (!payload) { console.warn('导出失败：API 未注册'); return; }
+                setLastExport(payload);
+                downloadJSON(payload, `graph-export-${Date.now()}.json`);
+                setMenuOpen(false);
+              }}
+            >Save to…</div>
           </div>
         )}
       </div>
+      <input ref={fileInputRef} type="file" accept="application/json" style={{display:'none'}} onChange={handleFileSelected} />
     </div>
   );
 }

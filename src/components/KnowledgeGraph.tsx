@@ -1,5 +1,5 @@
 // components/KnowledgeGraph.tsx
-import {useCallback, useState, useRef, useEffect, type ChangeEventHandler} from 'react';
+import {useCallback, useState, useRef, useEffect, useMemo, type ChangeEventHandler} from 'react';
 import {
     ReactFlow,
     Background,
@@ -18,6 +18,17 @@ import {
 getAllowedTextFromNode} from '../utils/markdownHighlightUtils';
 import { MarkdownNode, BranchMarkdownNode } from './Nodes.tsx';
 import type { NodeData } from './Interface.tsx';
+// 扩展节点运行期数据，避免 TS 对额外字段报错
+interface KGNodeData extends NodeData {
+  context?: Array<{ question: string; llmResponse?: string }>;
+  highlights?: Array<{ start: number; end: number; text?: string; scope?: { qaIndex: number; field: 'question'|'answer' } }>;
+  referenceContext?: string;
+  isAfterAsk?: boolean;
+  dynamicHandles?: any[];
+  onLabelMouseUp?: (id: string, data: any) => void;
+  onNodeClick?: (id: string) => void;
+}
+import type { Node, Edge } from '@xyflow/react';
 
 export const HL_DEBUG = true; // 开关：如需禁用日志，设为 false
 
@@ -41,16 +52,22 @@ const nodeTypes = {
     'branch-markdown': BranchMarkdownNode,
 };
 
-export default function KnowledgeGraph() {
+interface KnowledgeGraphProps {
+  onGraphExport?: (payload: any) => void;
+  onGraphImport?: (payload: any) => void;
+  onRegisterApi?: (api: { exportGraph: () => any; importGraph: (payload: any) => void }) => void;
+}
+
+export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegisterApi }: KnowledgeGraphProps) {
 
     const updateNodeInternals = useUpdateNodeInternals(); // ✅ 顶层调用 Hook
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes as any as Node<KGNodeData>[]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [currentQ, setCurrentQ] = useState('');
     const [contextNode, setContextNode] = useState(initialNode);
     const [contextText, setContextText] = useState('');
     // ★ 新增：在组件顶部声明一个 ref 存最近一次 context 高亮信息
-    const lastContextHLRef = useRef<{ nodeId: string; start: number; end: number; text: string; scope?: { qaIndex: number; field: 'question'|'answer' } } | null>(null);
+  const lastContextHLRef = useRef<{ nodeId: string; start: number; end: number; text: string; scope?: { qaIndex: number; field: 'question'|'answer' } } | null>(null);
     // ★ CHANGED: 扩展 selectionRef，加入 offsets
     const selectionRef = useRef<{
       text: string,
@@ -62,12 +79,8 @@ export default function KnowledgeGraph() {
       toolboxOffset?: { x: number; y: number }
     } | null>(null);
     const toolboxElRef = useRef<HTMLDivElement | null>(null);
-    const [hasSubmitted, setHasSubmitted] = useState(false);
+    // const [hasSubmitted, setHasSubmitted] = useState(false);
 
-    const handleNodeClick = useCallback((event, node) => {
-        console.log('Node clicked:', node);
-        setContextNode(node);
-    }, []);
 
     useEffect(() => {
         console.log('✅ 组件挂载完成');
@@ -115,7 +128,7 @@ export default function KnowledgeGraph() {
         };
     }
 
-    const addNewNodeAfterAsk = useCallback((oldNode: any, currentQ: string, isBranchNode: boolean, referenceContext: string) => {
+  const addNewNodeAfterAsk = useCallback((oldNode: any, currentQ: string, isBranchNode: boolean, referenceContext: string) => {
         const currentBaseNode = getNodeById(oldNode.id)
         console.log('addNewNodeAfterAsk, lastNode:', currentBaseNode);
         console.log('addNewNodeAfterAsk, currentQ:', currentQ);
@@ -123,7 +136,7 @@ export default function KnowledgeGraph() {
         const dynamicHandleId = `dyn-handle-${Date.now()}`;
 
         let dynamicHandleTop = selectionRef.current?.relativePosition?.dynamicHandleTop;
-        let dynamicHandleLeft = selectionRef.current?.relativePosition?.dynamicHandleLeft;
+        // let dynamicHandleLeft = selectionRef.current?.relativePosition?.dynamicHandleLeft;
 
         setNodes((nodes) => nodes.map((node) => {
           if (node.id === oldNode.id) {
@@ -149,18 +162,18 @@ export default function KnowledgeGraph() {
         const {lastNodeId, newNodeId}: any = getCurrentChildNodeId(nodes, oldNode.id);
         const lastNode = getNodeById(lastNodeId)
 
-        let positionX=currentBaseNode.position.x + 320;
-        let positionY=currentBaseNode.position.y - 150;
+  let positionX=(currentBaseNode?.position.x || 0) + 320;
+  let positionY=(currentBaseNode?.position.y || 0) - 150;
         console.log('####addNewNodeAfterAsk, lastNodeId:', lastNodeId, ', newNodeId:', newNodeId, ', lastNode:', lastNode);
-        if (lastNode) {
-            positionX = lastNode.position.x + 25;
-            positionY = lastNode.position.y + lastNode.measured.height + 10; // 在最后一个子节点的下方
-        }
+    if (lastNode) {
+      positionX = lastNode.position.x + 25;
+      positionY = lastNode.position.y + (lastNode.measured?.height || 0) + 10; // 在最后一个子节点的下方
+    }
         console.log('####addNewNodeAfterAsk, newNodeId:', newNodeId);
         const newNode = {
             id: newNodeId,
             data: {
-                label: getNodeLabel(null, currentQ, null, referenceContext),
+                label: getNodeLabel(undefined, currentQ, '', referenceContext),
                 context: [{question: currentQ, llmResponse: null}],
                 isAfterAsk: true,
                 referenceContext: referenceContext
@@ -191,7 +204,7 @@ export default function KnowledgeGraph() {
     }, [nodes, updateNodeInternals, getCurrentChildNodeId, getNodeById, setEdges, setNodes]);
 
     // 生成节点 label 的函数
-    const getNodeLabel = (node: any, currentQ: string, llmResponse: string, referenceContext: string = '') => {
+  const getNodeLabel = (node: any, currentQ: string, llmResponse: string | null, referenceContext: string = '') => {
         console.log("getNodeLabel", { node, currentQ, llmResponse, referenceContext })
       const context =
           node && node.data && Array.isArray(node.data.context)
@@ -256,7 +269,7 @@ export default function KnowledgeGraph() {
                             ...node,
                             data: {
                                 ...node.data,
-                                context: [...node.data.context.slice(0, -1), newQNA],
+                                context: [...(node.data.context as any[]).slice(0, -1), newQNA],
                                 label: getNodeLabel(node, currentQ, llmResponse),
                                 isAfterAsk: false,
                             },
@@ -267,7 +280,7 @@ export default function KnowledgeGraph() {
     }, [currentQ, contextNode])
 
     const handleInputSubmit = async () => {
-        setHasSubmitted(true)
+        // setHasSubmitted(true)
         if (!contextNode || !currentQ.trim()) return;
 
         setCurrentQ('');
@@ -275,7 +288,7 @@ export default function KnowledgeGraph() {
         let llmResponse;
         let optQ;
         if(contextText){
-            const oldQ = contextNode.data.context?.[contextNode.data.context.length - 1]?.question || '';
+            const oldQ = (contextNode as any).data.context?.[(contextNode as any).data.context.length - 1]?.question || '';
             // ★ CHANGED: 传入 referenceContext
             const referenceContext = `我想进一步了解 关于我刚才问你 “${oldQ}” 时你提到的 “${contextText}”`;
             optQ = `${referenceContext}: ${currentQ}` + "\n\n"
@@ -296,11 +309,11 @@ export default function KnowledgeGraph() {
 
     // ★ CHANGED: onLabelMouseUp 接收来自子组件的 selection（含 offsets/rect），不再自己从 window 读
     const handleMouseUp = useCallback((id, data: NodeData) => {
-        if(!hasSubmitted) return;
+        // if(!hasSubmitted) return;
 
         const sel = data?.selection;
         const text = sel?.text?.trim() || '';
-        if (HL_DEBUG) console.log('父模块接收到 parent.handleMouseUp', { id, hasSubmitted, sel, text });
+        if (HL_DEBUG) console.log('父模块接收到 parent.handleMouseUp', { id, sel, text });
 
         if (sel && text) {
             const rect = sel.rect;
@@ -331,7 +344,7 @@ export default function KnowledgeGraph() {
             hideNativeToolbox();
             selectionRef.current = null;
         }
-    }, [hasSubmitted, getZoom]);
+    }, [getZoom]);
 
     // 原生插入工具条
     function showNativeToolbox(rect: DOMRect) {
@@ -415,36 +428,54 @@ export default function KnowledgeGraph() {
     useEffect(() => () => hideNativeToolbox(), []);
 
     // 新增：全局点击自动隐藏工具条
-    useEffect(() => {
-        function handleGlobalClickDown(e: MouseEvent) {
-            if (toolboxElRef.current && !toolboxElRef.current.contains(e.target as Node)) {
-                hideNativeToolbox();
-                window.getSelection()?.removeAllRanges();
-            }
-        }
-        document.addEventListener('mousedown', handleGlobalClickDown);
-        return () => {
-            document.removeEventListener('mousedown', handleGlobalClickDown);
-        };
-    }, []);
+    // useEffect(() => {
+    //     function handleGlobalClickDown(e: MouseEvent) {
+    //       console.log('全局点击检测 handleGlobalClickDown', e.target);
+    //         if (toolboxElRef.current && !toolboxElRef.current.contains(e.target as Node)) {
+    //             hideNativeToolbox();
+    //             window.getSelection()?.removeAllRanges();
+    //         }
+    //     }
+    //     document.addEventListener('mousedown', handleGlobalClickDown);
+    //     return () => {
+    //         document.removeEventListener('mousedown', handleGlobalClickDown);
+    //     };
+    // }, []);
 
     // 1. handleMouseUp 作为 onLabelMouseUp
     // 2. 渲染前为每个 node 注入 onLabelMouseUp 到 data
-    const nodesWithHandler = nodes.map(node => ({
+    // 单独的节点点击处理，保持引用稳定
+    const handleNodeClick = useCallback((id: string) => {
+      if (HL_DEBUG) console.log('点击节点 handleNodeClick', id);
+      const n = getNodeById(id);
+      if (n) setContextNode(n);
+      // 仅在选中状态变化时才创建新数组，减少无谓渲染
+      setNodes(nds => {
+        let changed = false;
+        const next = nds.map(x => {
+          const shouldSelect = x.id === id;
+          if (x.selected !== shouldSelect) {
+            changed = true;
+            return { ...x, selected: shouldSelect };
+          }
+          return x;
+        });
+        return changed ? next : nds; // 没变化直接复用旧引用
+      });
+    }, [getNodeById]);
+
+    // 使用 useMemo 缓存带有 handler 的节点，避免每次 render 生成新 data 对象
+    const nodesWithHandler = useMemo(() => {
+      console.log('生成 nodesWithHandler');
+      return nodes.map((node: Node) => ({
         ...node,
         data: {
-            ...node.data,
-            onLabelMouseUp: handleMouseUp,
-            onNodeClick: (id: string) => {
-              console.log('点击节点，id： ', { id });
-              const n = getNodeById(id) || node; // 防御性兜底
-              console.log('点击节点 作为 当前节点：', n);
-              setContextNode(n);
-              // 选中：手动设置 selected，模拟 React Flow 的效果
-              setNodes(nds => nds.map(x => ({ ...x, selected: x.id === id })));
-            }
+          ...node.data,
+          onLabelMouseUp: handleMouseUp,
+          onNodeClick: handleNodeClick
         }
-    }));
+      }));
+    }, [nodes, handleMouseUp, handleNodeClick]);
 
     const [colorMode, setColorMode] = useState<ColorMode>('light');
     const onChange: ChangeEventHandler<HTMLSelectElement> = (evt) => {
@@ -510,6 +541,83 @@ export default function KnowledgeGraph() {
       lastContextHLRef.current = null;
     }, [setNodes]);
 
+    // 导出：nodesWithHandler（去除 handler 函数）与 edges
+  const exportGraph = useCallback(() => {
+      const sanitizedNodes = nodesWithHandler.map(n => {
+        const { onLabelMouseUp, onNodeClick, ...restData } = (n.data as any) || {};
+        return {
+          ...n,
+          data: { ...restData }
+        };
+      });
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        nodes: sanitizedNodes,
+        edges
+      };
+      onGraphExport?.(payload);
+      return payload;
+    }, [nodesWithHandler, edges, onGraphExport]);
+
+  const importGraph = useCallback((payload: any) => { 
+    if (!payload || !Array.isArray(payload.nodes) || !Array.isArray(payload.edges)) return; 
+    const restored = payload.nodes.map(
+      (node: any) => ({ 
+        ...node, 
+        data: { 
+          ...node.data, 
+          onLabelMouseUp: handleMouseUp, 
+          onNodeClick: handleNodeClick 
+        } 
+      })
+    ); 
+    
+    // 先设置节点，再异步设置边，确保节点及其 handles 已挂载
+    setNodes(restored);
+
+    // 使用 requestAnimationFrame 让 ReactFlow 完成一次渲染后再处理内部更新与边集合
+    requestAnimationFrame(() => {
+      // 确保缺失的动态 source handle 被重建（根据 edge.sourceHandle）
+      const edges: any[] = payload.edges || [];
+      let needNodeUpdate = false;
+      const patchedNodes = restored.map((n: any) => {
+        const dyn = Array.isArray(n.data?.dynamicHandles) ? [...n.data.dynamicHandles] : [];
+        const relatedEdges = edges.filter((e: any) => e.source === n.id && e.sourceHandle);
+        relatedEdges.forEach((e: any) => {
+          if (e.sourceHandle && !dyn.some(h => h.id === e.sourceHandle)) {
+            dyn.push({ id: e.sourceHandle, type: 'source', position: 1 /* Position.Right */, style: { top: 40 } });
+            needNodeUpdate = true;
+            console.warn('[importGraph] Reconstructed missing source handle', e.sourceHandle, 'on node', n.id);
+          }
+        });
+        return dyn.length !== (Array.isArray(n.data?.dynamicHandles) ? n.data.dynamicHandles.length : 0)
+          ? { ...n, data: { ...n.data, dynamicHandles: dyn } }
+          : n;
+      });
+      if (needNodeUpdate) {
+        setNodes(patchedNodes);
+      }
+      console.log('Restored nodes:', patchedNodes);
+      patchedNodes.forEach((n: any) => updateNodeInternals(n.id));
+      console.log('Restored edges (deferred):', edges);
+      setEdges(edges as any);
+    });
+
+    
+    
+    
+    onGraphImport?.(payload); 
+    
+
+  }, [updateNodeInternals, handleMouseUp, handleNodeClick, setNodes, setEdges, onGraphImport]
+  );
+
+    // 将 API 注册给父组件
+    useEffect(() => {
+      onRegisterApi?.({ exportGraph, importGraph });
+    }, [onRegisterApi, exportGraph, importGraph]);
+
     return (
         <div className="w-screen h-screen relative">
             <div className="reactflow-wrapper">
@@ -518,7 +626,7 @@ export default function KnowledgeGraph() {
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
-                    onNodeClick={handleNodeClick}
+                    // onNodeClick={handleNodeClick}
                     fitView
                     nodeTypes={nodeTypes}
                     colorMode={colorMode}

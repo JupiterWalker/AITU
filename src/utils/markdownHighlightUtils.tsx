@@ -10,10 +10,10 @@ const HL_DEBUG = true; // 开关：如需禁用日志，设为 false
 
 // ★ NEW: 选区 → 偏移 工具
 export function getOffsetsWithin(rootEl: HTMLElement, range: Range) {
-  if (HL_DEBUG) {
-    console.groupCollapsed('🪵[HL] getOffsetsWithin:start');
-    console.log('selectedText(range):', range.toString());
-  }
+  // if (HL_DEBUG) {
+  //   console.groupCollapsed('🪵[HL] getOffsetsWithin:start');
+  //   console.log('selectedText(range):', range.toString());
+  // }
 
   const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT);
   let start = -1, end = -1, count = 0, skipped = 0;
@@ -103,7 +103,7 @@ export function normalizeRanges(ranges: RangeLike[]) {
     if (!last || r.start > last.end) merged.push({ ...r });
     else last.end = Math.max(last.end, r.end);
   }
-  if (HL_DEBUG) console.log('🪵[HL] normalizeRanges ->', merged);
+  // if (HL_DEBUG) console.log('🪵[HL] normalizeRanges ->', merged);
   return merged;
 }
 
@@ -116,14 +116,14 @@ export function rehypeHighlightRanges(ranges: RangeLike[]) {
   const merged = normalizeRanges(ranges);
   return (tree: any) => {
     if (!merged.length || !tree || typeof tree !== 'object') {
-      if (HL_DEBUG) console.log('🪵[HL] rehypeHighlightRanges: skip (no ranges or invalid tree)', { ranges, treeType: tree?.type });
+      // if (HL_DEBUG) console.log('🪵[HL] rehypeHighlightRanges: skip (no ranges or invalid tree)', { ranges, treeType: tree?.type });
       return;
     }
 
-    if (HL_DEBUG) {
-      console.groupCollapsed('🪵[HL] rehypeHighlightRanges:transform');
-      console.log('mergedCount:', merged.length, 'treeType:', tree?.type);
-    }
+    // if (HL_DEBUG) {
+    //   console.groupCollapsed('🪵[HL] rehypeHighlightRanges:transform');
+    //   console.log('mergedCount:', merged.length, 'treeType:', tree?.type);
+    // }
 
     // 第一次遍历：统计坐标/命中并收集 splice 操作（仍然两阶段应用）
     const opsByParent = new Map<any, Array<{ index: number; parts: any[] }>>();

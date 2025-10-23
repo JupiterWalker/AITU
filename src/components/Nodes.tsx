@@ -52,9 +52,9 @@ const CoreMarkdownNode = React.memo(({ data, selected, id }: CustomNodeProps) =>
         return;
       }
 
-      if (HL_DEBUG) {
-        console.log('🪵[HL] segmentMouseUp:selection', { nodeId: id, selectedText, offsets, scope });
-      }
+      // if (HL_DEBUG) {
+      //   console.log('🪵[HL] segmentMouseUp:selection', { nodeId: id, selectedText, offsets, scope });
+      // }
 
       data.onLabelMouseUp?.(id, {
         ...data,
@@ -68,12 +68,13 @@ const CoreMarkdownNode = React.memo(({ data, selected, id }: CustomNodeProps) =>
 
   // 把高亮范围注入 rehype 插件（最后执行，保证已渲染 KaTeX）
   console.log("把高亮范围注入 rehype 插件", { nodeId: id, highlights: data.highlights });
-  if (!data.highlights) data.highlights = [];
+  var dataHighlights = data.highlights;
+  if (!dataHighlights) dataHighlights = [];
   var offset = 7; // 默认偏移量
   var highlightAfterOffset;
   if (data.context && data.context.length > 0) {
     // 遍历 data.highlights, 把每个 highlight 的 start 和 end 加上 highlightAfterOffset
-    highlightAfterOffset = data.highlights.map(h => ({
+    highlightAfterOffset = dataHighlights.map(h => ({
       ...h,
       start: h.start + offset,
       end: h.end + offset
@@ -86,15 +87,6 @@ const CoreMarkdownNode = React.memo(({ data, selected, id }: CustomNodeProps) =>
   ];
 
 
-
-  if (HL_DEBUG) {
-    console.log('🪵[HL] CoreMarkdownNode:render', {
-      nodeId: id,
-      highlights: data.highlights,
-      highlightsCount: data.highlights?.length || 0,
-      labelLen: data.label?.length
-    });
-  }
 
   const lastQA = Array.isArray(data.context) && data.context.length > 0
     ? data.context[data.context.length - 1]

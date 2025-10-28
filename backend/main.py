@@ -2,7 +2,13 @@ import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from .chat import chat_router
+# 兼容直接运行 (python backend/main.py) 与包方式 (python -m backend.main)
+try:
+    from .chat import chat_router
+    from .graphs import graphs_router  # 新增探索图路由
+except ImportError:  # fallback 当没有包上下文时
+    from chat import chat_router  # type: ignore
+    from graphs import graphs_router  # type: ignore
 
 app = FastAPI()
 app.add_middleware(
@@ -24,7 +30,10 @@ async def say_hello(name: str):
 
 # 包含 chat_router 的路由
 app.include_router(chat_router)
+app.include_router(graphs_router)
 
 
 if __name__ == "__main__":
+    # 提示更推荐的启动方式
+    print("[info] 推荐使用: uvicorn backend.main:app --reload 或 python -m backend.main")
     uvicorn.run(app, host="0.0.0.0", port=8000)

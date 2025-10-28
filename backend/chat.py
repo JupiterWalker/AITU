@@ -4,7 +4,10 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from .llm.model import SiliconFlowChatModel
+try:
+    from .llm.model import SiliconFlowChatModel
+except ImportError: # fallback 当没有包上下文时
+    from llm.model import SiliconFlowChatModel
 
 chat_router = APIRouter()
 

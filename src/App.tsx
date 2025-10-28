@@ -9,6 +9,7 @@ import HomePage from './components/HomePage';
 function App() {
   const [showHome, setShowHome] = useState(true);
   const [bootstrapQuestion, setBootstrapQuestion] = useState<string | null>(null);
+  const [prefillGraph, setPrefillGraph] = useState<any | null>(null); // 选中已存在的图时使用
   const [menuOpen, setMenuOpen] = useState(false);
   // const [lastExport, setLastExport] = useState<any | null>(null); // 首页暂不需要导出状态
   const graphApiRef = useRef<{ exportGraph: () => any; importGraph: (p:any)=>void } | null>(null);
@@ -55,7 +56,8 @@ function App() {
   }
 
   if (showHome) {
-    return <HomePage onSubmitQuestion={(q) => { setBootstrapQuestion(q); setShowHome(false); }} />;
+    return <HomePage onSubmitQuestion={(q) => { setBootstrapQuestion(q); setShowHome(false); }} 
+    onSelectExistingGraph={(graph) => { setPrefillGraph(graph); setShowHome(false); }} />;
   }
   // 原知识图页面保留，以后可以通过状态或路由返回。
   return (
@@ -63,6 +65,7 @@ function App() {
       <ReactFlowProvider>
         <KnowledgeGraph
           bootstrapQuestion={bootstrapQuestion || undefined}
+          prefillGraph={prefillGraph || undefined}
           onGraphImport={(p)=> { console.log('已导入图', p); }}
           onRegisterApi={(api) => { graphApiRef.current = api; }}
         />

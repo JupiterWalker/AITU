@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { GraphService, type GraphBasic } from '../service';
 // 无需显式导入 React（Vite + TSX 自动处理），保持文件纯静态组件。
 
 // 静态首页，含居中标题、输入框占位、下方四个骨架卡片
@@ -6,10 +7,26 @@ import { useState } from 'react';
 // 后续可以将搜索/问题输入逻辑接入真正的业务；当前仅静态展示。
 interface HomePageProps {
   onSubmitQuestion?: (q: string) => void;
+  onSelectExistingGraph?: (graph: any) => void;
 }
 
-export default function HomePage({ onSubmitQuestion }: HomePageProps) {
+export default function HomePage({ onSubmitQuestion, onSelectExistingGraph }: HomePageProps) {
   const [value, setValue] = useState('');
+  const [graphs, setGraphs] = useState<GraphBasic[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const list = await GraphService.listGraphs();
+      if (!cancelled) {
+        setGraphs(list);
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
     if (e.key === 'Enter') {
@@ -35,37 +52,52 @@ export default function HomePage({ onSubmitQuestion }: HomePageProps) {
           />
         </div>
 
-        {/* 骨架区域 */}
+        {/* 骨架区域 / 图列表 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mt-24 w-full px-12">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex flex-col items-center w-full">
-              {/* 上方主骨架图块 */}
-              <div className="w-full flex flex-col gap-2 mb-6">
-                <div className="h-3 bg-gray-100 rounded animate-pulse" />
-                <div className="flex gap-2">
-                  <div className="flex-1 h-12 bg-gray-100 rounded animate-pulse" />
-                  <div className="flex-1 flex flex-col gap-2">
-                    <div className="h-6 bg-gray-100 rounded animate-pulse" />
-                    <div className="h-6 bg-gray-100 rounded animate-pulse" />
+          {(loading ? Array.from({ length: 4 }) : graphs).map((item: any, i) => {
+            const title = loading ? '加载中…' : item.title;
+            return (
+              <div
+                key={loading ? i : item.id}
+                className="flex flex-col items-center w-full cursor-pointer group"
+                onClick={async () => {
+                  if (loading) return;
+                  const detail = await GraphService.getGraph(item.id);
+                  if (detail) onSelectExistingGraph?.(detail);
+                }}
+              >
+                {/* 上方主骨架占位或缩略图位 */}
+                <div className="w-full flex flex-col gap-2 mb-4">
+                  <div className={`h-3 rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-indigo-50'}`} />
+                  <div className="flex gap-2">
+                    <div className={`flex-1 h-12 rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-indigo-100 group-hover:bg-indigo-200'}`} />
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className={`h-6 rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-indigo-100 group-hover:bg-indigo-200'}`} />
+                      <div className={`h-6 rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-indigo-100 group-hover:bg-indigo-200'}`} />
+                    </div>
                   </div>
                 </div>
-                {/* 分隔线 */}
-                <div className="w-full h-[3px] bg-gray-100 rounded" />
-              </div>
-              
-              {/* 下方次骨架 */}
-              <div className="w-full flex flex-col gap-3 mt-6">
-                <div className="flex gap-2">
-                  <div className="flex-1 h-14 bg-gray-100 rounded animate-pulse" />
-                  <div className="flex-1 flex flex-col gap-2">
-                    <div className="h-6 bg-gray-100 rounded animate-pulse" />
-                    <div className="h-6 bg-gray-100 rounded animate-pulse" />
-                  </div>
+                {/* 图标题 */}
+                <div className="text-sm text-gray-700 font-medium text-center line-clamp-2 min-h-[2.5rem]">
+                  {title}
                 </div>
-                <div className="w-full h-[3px] bg-gray-100 rounded" />
+                {/* 下方分隔与次区域，可用于未来显示统计 */}
+                <div className="w-full mt-4 flex flex-col gap-3">
+                  <div className="flex gap-2">
+                    <div className={`flex-1 h-14 rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-slate-100 group-hover:bg-slate-200'}`} />
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className={`h-6 rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-slate-100 group-hover:bg-slate-200'}`} />
+                      <div className={`h-6 rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-slate-100 group-hover:bg-slate-200'}`} />
+                    </div>
+                  </div>
+                  <div className={`w-full h-[3px] rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-slate-200 group-hover:bg-slate-300'}`} />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+          {!loading && graphs.length === 0 && (
+            <div className="col-span-full text-center text-gray-400">暂无探索图，创建第一个问题开始吧。</div>
+          )}
         </div>
       </div>
     </div>

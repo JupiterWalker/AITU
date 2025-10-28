@@ -9,6 +9,7 @@ services:
     container_name: aitu-frontend
     environment:
       - VITE_LLM_BASE_URL=/api
+      - ENV=dev
     volumes:
       - frontend_dist:/app/dist
     networks:

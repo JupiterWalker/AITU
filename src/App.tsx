@@ -3,11 +3,14 @@ import KnowledgeGraph from "./components/KnowledgeGraph.tsx";
 import {ReactFlowProvider} from "@xyflow/react";
 import './App.css'
 import React, { useState, useRef } from "react"; // 或 './App.css'
+import HomePage from './components/HomePage';
 
 
 function App() {
+  const [showHome, setShowHome] = useState(true);
+  const [bootstrapQuestion, setBootstrapQuestion] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [lastExport, setLastExport] = useState<any | null>(null);
+  // const [lastExport, setLastExport] = useState<any | null>(null); // 首页暂不需要导出状态
   const graphApiRef = useRef<{ exportGraph: () => any; importGraph: (p:any)=>void } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const downloadJSON = (data: any, filename: string) => {
@@ -51,11 +54,15 @@ function App() {
     reader.readAsText(file);
   }
 
+  if (showHome) {
+    return <HomePage onSubmitQuestion={(q) => { setBootstrapQuestion(q); setShowHome(false); }} />;
+  }
+  // 原知识图页面保留，以后可以通过状态或路由返回。
   return (
     <div style={{width: '100vw', height: '100vh', position: 'relative'}}>
       <ReactFlowProvider>
         <KnowledgeGraph
-          onGraphExport={(p) => setLastExport(p)}
+          bootstrapQuestion={bootstrapQuestion || undefined}
           onGraphImport={(p)=> { console.log('已导入图', p); }}
           onRegisterApi={(api) => { graphApiRef.current = api; }}
         />
@@ -92,7 +99,12 @@ function App() {
               style={{padding:'6px 14px', cursor:'pointer', fontSize:14}}
               role="menuitem"
               onClick={() => { triggerImportChooser(); setMenuOpen(false); }}
-            >Open</div>
+            >Save</div>
+            <div
+              style={{padding:'6px 14px', cursor:'pointer', fontSize:14}}
+              role="menuitem"
+              onClick={() => { triggerImportChooser(); setMenuOpen(false); }}
+            >Import</div>
             <div
               style={{padding:'6px 14px', cursor:'pointer', fontSize:14}}
               role="menuitem"
@@ -100,11 +112,11 @@ function App() {
                 console.log("点击 save to")
                 const payload = graphApiRef.current?.exportGraph();
                 if (!payload) { console.warn('导出失败：API 未注册'); return; }
-                setLastExport(payload);
+                // setLastExport(payload);
                 downloadJSON(payload, `graph-export-${Date.now()}.json`);
                 setMenuOpen(false);
               }}
-            >Save to…</div>
+            >Export…</div>
           </div>
         )}
       </div>

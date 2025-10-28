@@ -56,9 +56,10 @@ interface KnowledgeGraphProps {
   onGraphExport?: (payload: any) => void;
   onGraphImport?: (payload: any) => void;
   onRegisterApi?: (api: { exportGraph: () => any; importGraph: (payload: any) => void }) => void;
+  bootstrapQuestion?: string; // 首页传入的首次问题
 }
 
-export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegisterApi }: KnowledgeGraphProps) {
+export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegisterApi, bootstrapQuestion }: KnowledgeGraphProps) {
 
     const updateNodeInternals = useUpdateNodeInternals(); // ✅ 顶层调用 Hook
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes as any as Node<KGNodeData>[]);
@@ -238,80 +239,81 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
       ].join('');
     }
 
-    const updateNodeAfterAsk = useCallback((newNodeId: string) => {
-        console.log("updateNodeAfterAsk")
-        const targetId = newNodeId? newNodeId: contextNode.id
-        const newQNA = {question: currentQ, llmResponse: null}
-        setNodes((nds) =>
-                nds.map((node) =>
-                    node.id === targetId
-                        ? {
-                            ...node,
-                            data: {
-                                ...node.data,
-                                context: [...(node.data.context || []), newQNA],
-                                label: getNodeLabel(node, currentQ, null),
-                                isAfterAsk: true,
-                            },
-                        }
-                        : node
-                )
-            );
-    }, [currentQ, contextNode])
-
-    const updateNodeAfterResponse = useCallback((llmResponse: string, newNodeId: string) => {
-        const targetId = newNodeId? newNodeId: contextNode.id
-        const newQNA = {question: currentQ, llmResponse: llmResponse}
-        setNodes((nds) =>
-                nds.map((node) =>
-                    node.id === targetId
-                        ? {
-                            ...node,
-                            data: {
-                                ...node.data,
-                                context: [...(node.data.context as any[]).slice(0, -1), newQNA],
-                                label: getNodeLabel(node, currentQ, llmResponse),
-                                isAfterAsk: false,
-                            },
-                        }
-                        : node
-                )
-            );
-    }, [currentQ, contextNode])
-
-    const handleInputSubmit = async () => {
-        // setHasSubmitted(true)
-        if (!contextNode || !currentQ.trim()) return;
-
-        setCurrentQ('');
-
-        let llmResponse;
-        let optQ;
-        if(contextText){
-            const oldQ = (contextNode as any).data.context?.[(contextNode as any).data.context.length - 1]?.question || '';
-            // ★ CHANGED: 传入 referenceContext
-            const referenceContext = `我想进一步了解 关于我刚才问你 “${oldQ}” 时你提到的 “${contextText}”`;
-            optQ = `${referenceContext}: ${currentQ}` + "\n\n"
-            const newNodeId = addNewNodeAfterAsk(contextNode, currentQ, true, referenceContext);
-            llmResponse = await LLMService.askQuestion(optQ);
-            updateNodeAfterResponse(llmResponse, newNodeId)
-        }else{
-            optQ = currentQ
-            updateNodeAfterAsk(null as any)
-            llmResponse = await LLMService.askQuestion(optQ);
-            updateNodeAfterResponse(llmResponse, null as any)
+    const updateNodeAfterAsk = useCallback((question: string, newNodeId?: string) => {
+      console.log("updateNodeAfterAsk", question)
+      const targetId = newNodeId ? newNodeId : contextNode.id
+      const newQNA = { question, llmResponse: null }
+      setNodes(nds => nds.map(node => node.id === targetId ? {
+        ...node,
+        data: {
+          ...node.data,
+          context: [...(node.data.context as any[] || []), newQNA],
+          label: getNodeLabel(node, question, null),
+          isAfterAsk: true,
         }
-        console.log('LLM Response:', llmResponse);
-        setContextText('');
-        // 提交问题 → 生成新节点 → 状态收尾
-        lastContextHLRef.current = null;
-    };
+      } : node))
+    }, [contextNode])
+
+    const updateNodeAfterResponse = useCallback((question: string, llmResponse: string, newNodeId?: string) => {
+      const targetId = newNodeId ? newNodeId : contextNode.id
+      const newQNA = { question, llmResponse }
+      setNodes(nds => nds.map(node => node.id === targetId ? {
+        ...node,
+        data: {
+          ...node.data,
+          context: [...(node.data.context as any[]).slice(0, -1), newQNA],
+          label: getNodeLabel(node, question, llmResponse),
+          isAfterAsk: false,
+        }
+      } : node))
+    }, [contextNode])
+
+  const handleInputSubmit = async (overrideQ?: string) => {
+    // 支持传入覆盖问题，避免初始引导时因 state 还未更新导致跳过
+    const q = (overrideQ ?? currentQ).trim();
+    console.log('handleInputSubmit, overrideQ:', overrideQ, ', currentQ:', currentQ, "final q:", q);
+    if (!contextNode || !q) return;
+
+    // 若是 override 提交，确保 UI 输入框清空
+    if (!overrideQ) setCurrentQ('');
+
+    let llmResponse;
+    let optQ;
+    if (contextText) {
+      console.log('contextText 存在，准备构建带上下文的问题');
+      const oldQ = (contextNode as any).data.context?.[(contextNode as any).data.context.length - 1]?.question || '';
+      const referenceContext = `我想进一步了解 关于我刚才问你 “${oldQ}” 时你提到的 “${contextText}”`;
+      optQ = `${referenceContext}: ${q}` + "\n\n";
+  const newNodeId = addNewNodeAfterAsk(contextNode, q, true, referenceContext);
+  llmResponse = await LLMService.askQuestion(optQ);
+  updateNodeAfterResponse(q, llmResponse, newNodeId);
+    } else {
+      console.log('contextText 不存在，直接使用当前问题');
+      optQ = q;
+  updateNodeAfterAsk(q, undefined);
+      llmResponse = await LLMService.askQuestion(optQ);
+  updateNodeAfterResponse(q, llmResponse, undefined);
+    }
+    console.log('LLM Response:', llmResponse);
+    setContextText('');
+    lastContextHLRef.current = null;
+  };
+
+    // 接收来自首页的初始问题并自动提交（只执行一次）
+    const bootstrappedRef = useRef(false);
+    useEffect(() => {
+      if (bootstrapQuestion && !bootstrappedRef.current) {
+        bootstrappedRef.current = true;
+        // 直接使用覆盖参数，避免依赖 state 更新时序
+        handleInputSubmit(bootstrapQuestion);
+      }
+    }, [bootstrapQuestion]);
 
     // ★ CHANGED: onLabelMouseUp 接收来自子组件的 selection（含 offsets/rect），不再自己从 window 读
-    const handleMouseUp = useCallback((id, data: NodeData) => {
+  const handleMouseUp = useCallback((id: string, data: any) => {
         // if(!hasSubmitted) return;
 
-        const sel = data?.selection;
+  const sel: any = data?.selection;
         const text = sel?.text?.trim() || '';
         if (HL_DEBUG) console.log('父模块接收到 parent.handleMouseUp', { id, sel, text });
 
@@ -405,7 +407,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
                 nds.map((n) => {
                   if (n.id === node.id) {
                     const next = [
-                      ...(n.data.highlights || []),
+                      ...((n.data.highlights as any[]) || []),
                       { start: offsets.start, end: offsets.end, scope: selectionRef.current?.scope, text }
                     ];
                     return { ...n, data: { ...n.data, highlights: next } };
@@ -448,7 +450,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
     const handleNodeClick = useCallback((id: string) => {
       if (HL_DEBUG) console.log('点击节点 handleNodeClick', id);
       const n = getNodeById(id);
-      if (n) setContextNode(n);
+  if (n) setContextNode(n as any);
       // 仅在选中状态变化时才创建新数组，减少无谓渲染
       setNodes(nds => {
         let changed = false;
@@ -494,7 +496,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
           return nds.map(n => {
             if (n.id !== recent.nodeId) return n;
             const before = n.data?.highlights || [];
-            const after = before.filter(r => !(r.start === recent.start && r.end === recent.end));
+            const after = (before as any[]).filter(r => !(r.start === recent.start && r.end === recent.end));
             return { ...n, data: { ...n.data, highlights: after } };
           });
         }
@@ -512,7 +514,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
           if (n.id !== fallbackNodeId) return n;
           const before = n.data?.highlights || [];
           // 删除所有刚好切片等于 text 的区间（可根据需要改为大小写/空白宽松比较）
-          const after = before.filter(r => full.slice(r.start, r.end) !== trimmed);
+          const after = (before as any[]).filter(r => full.slice(r.start, r.end) !== trimmed);
           return { ...n, data: { ...n.data, highlights: after } };
         });
       });
@@ -529,7 +531,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
         nds.map((n) => {
           if (n.id !== recent.nodeId) return n;
           const before = n.data?.highlights || [];
-          const after = before.filter((r) =>
+          const after = (before as any[]).filter((r: any) =>
             !(r.start === recent.start && r.end === recent.end &&
               ((r.scope?.qaIndex ?? -1) === (recent.scope?.qaIndex ?? -1)) &&
               ((r.scope?.field ?? 'answer') === (recent.scope?.field ?? 'answer'))

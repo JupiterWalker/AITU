@@ -75,43 +75,46 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
     const toolboxElRef = useRef<HTMLDivElement | null>(null);
     // const [hasSubmitted, setHasSubmitted] = useState(false);
 
-
+    const bootstrappedRef = useRef(false);
     useEffect(() => {
         console.log('✅ 组件挂载完成');
+        bootstrappedRef.current = false;
         return () => {
           console.log('❌ 组件即将卸载');
+          bootstrappedRef.current = true;
         };
     }, []);
 
-    // ★ NEW: 首次挂载：如有 prefillGraph 则直接载入，否则创建新图
+    // 接收来自首页的初始问题并自动提交（只执行一次）
+    
+    // useEffect(() => {
+    //   if (bootstrapQuestion && !bootstrappedRef.current) {
+    //     bootstrappedRef.current = true;
+    //     // 直接使用覆盖参数，避免依赖 state 更新时序
+    //     handleInputSubmit(bootstrapQuestion);
+    //   }
+    // }, [bootstrapQuestion]);
+
+    // ★ NEW: 首次挂载：如有 prefillGraph 则直接载入
     useEffect(() => {
       if (graphId !== null) return; // 已存在
       if (prefillGraph) {
-        // 导入已有图
         try {
           const { nodes: pNodes, edges: pEdges, id } = prefillGraph;
           setNodes(pNodes as any);
           setEdges(pEdges as any);
           setGraphId(id);
           if (HL_DEBUG) console.log('[graph] 已载入已有图 id=', id, ' nodes=', pNodes.length, ' edges=', pEdges.length);
+          if (bootstrapQuestion && !bootstrappedRef.current) {
+            bootstrappedRef.current = true;
+            // 直接使用覆盖参数，避免依赖 state 更新时序
+            handleInputSubmit(bootstrapQuestion);
+          }
         } catch (e) {
           console.error('预载图失败', e);
         }
-        return;
       }
-      (async () => {
-        const created = await GraphService.createGraph({
-          title: graphTitleRef.current,
-          nodes: nodes,
-          edges: edges
-        });
-        if (created) {
-          setGraphId(created.id);
-          if (HL_DEBUG) console.log('[graph] 创建成功 id=', created.id);
-        }
-      })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [prefillGraph]);
+    }, [prefillGraph, bootstrapQuestion]);
 
     // 监听 nodes / edges 变化进行节流更新
     const saveTimerRef = useRef<number | null>(null);
@@ -287,6 +290,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
     const updateNodeAfterResponse = useCallback((question: string, llmResponse: string, newNodeId?: string) => {
       const targetId = newNodeId ? newNodeId : contextNode.id
       const newQNA = { question, llmResponse }
+      console.log("updateNodeAfterResponse, nodes", nodes)
       setNodes(nds => nds.map(node => node.id === targetId ? {
         ...node,
         data: {
@@ -314,30 +318,21 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
       const oldQ = (contextNode as any).data.context?.[(contextNode as any).data.context.length - 1]?.question || '';
       const referenceContext = `我想进一步了解 关于我刚才问你 “${oldQ}” 时你提到的 “${contextText}”`;
       optQ = `${referenceContext}: ${q}` + "\n\n";
-  const newNodeId = addNewNodeAfterAsk(contextNode, q, true, referenceContext);
-  llmResponse = await LLMService.askQuestion(optQ);
-  updateNodeAfterResponse(q, llmResponse, newNodeId);
+      const newNodeId = addNewNodeAfterAsk(contextNode, q, true, referenceContext);
+      llmResponse = await LLMService.askQuestion(optQ);
+      updateNodeAfterResponse(q, llmResponse, newNodeId);
     } else {
       console.log('contextText 不存在，直接使用当前问题');
       optQ = q;
-  updateNodeAfterAsk(q, undefined);
+      updateNodeAfterAsk(q, undefined);
       llmResponse = await LLMService.askQuestion(optQ);
-  updateNodeAfterResponse(q, llmResponse, undefined);
+      updateNodeAfterResponse(q, llmResponse, undefined);
     }
     console.log('LLM Response:', llmResponse);
     setContextText('');
     lastContextHLRef.current = null;
   };
 
-    // 接收来自首页的初始问题并自动提交（只执行一次）
-    const bootstrappedRef = useRef(false);
-    useEffect(() => {
-      if (bootstrapQuestion && !bootstrappedRef.current) {
-        bootstrappedRef.current = true;
-        // 直接使用覆盖参数，避免依赖 state 更新时序
-        handleInputSubmit(bootstrapQuestion);
-      }
-    }, [bootstrapQuestion]);
 
     // ★ CHANGED: onLabelMouseUp 接收来自子组件的 selection（含 offsets/rect），不再自己从 window 读
   const handleMouseUp = useCallback((id: string, data: any) => {

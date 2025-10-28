@@ -28,11 +28,30 @@ export default function HomePage({ onSubmitQuestion, onSelectExistingGraph }: Ho
     return () => { cancelled = true; };
   }, []);
 
-  const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
+  const handleKeyDown: React.KeyboardEventHandler<HTMLInputElement> = async (e) => {
     if (e.key === 'Enter') {
       const q = value.trim();
       if (!q) return;
-      onSubmitQuestion?.(q);
+
+      // 创建新图
+      const createdGraph = await GraphService.createGraph({
+        title: q,
+        nodes: [{
+            id: 'root',
+            type: 'markdown',
+            data: {label: '💡 输入你的第一个问题'},
+            position: {x: 250, y: 50},
+            // draggable: false,
+            selected: true,
+            dragHandle: '.drag-handle__custom'
+        }],
+        edges: []
+      });
+
+      if (createdGraph) {
+        onSubmitQuestion?.(q);
+        onSelectExistingGraph?.(createdGraph);
+      }
     }
   };
 

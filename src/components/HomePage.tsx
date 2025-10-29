@@ -61,7 +61,10 @@ export default function HomePage({ onSubmitQuestion, onSelectExistingGraph }: Ho
       <div className="w-full max-w-5xl h-[90vh] rounded-xl flex flex-col items-center pt-72 relative">
         {/* 中间标题与输入框 */}
         <div className="flex flex-col items-center w-full px-4">
-          <h1 className="text-2xl font-medium text-gray-700 mb-10 tracking-wide">今天我们探索什么？</h1>
+          <h1 className="text-2xl font-medium text-gray-700 mb-10 tracking-wide">
+            今天我们探索什么？
+          </h1>
+
           <input
             className="w-[36rem] h-20 border border-gray-300 rounded-md px-6 text-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             placeholder="输入你的问题并回车..."
@@ -101,16 +104,6 @@ export default function HomePage({ onSubmitQuestion, onSelectExistingGraph }: Ho
                   {title}
                 </div>
                 {/* 下方分隔与次区域，可用于未来显示统计 */}
-                <div className="w-full mt-4 flex flex-col gap-3">
-                  <div className="flex gap-2">
-                    <div className={`flex-1 h-14 rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-slate-100 group-hover:bg-slate-200'}`} />
-                    <div className="flex-1 flex flex-col gap-2">
-                      <div className={`h-6 rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-slate-100 group-hover:bg-slate-200'}`} />
-                      <div className={`h-6 rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-slate-100 group-hover:bg-slate-200'}`} />
-                    </div>
-                  </div>
-                  <div className={`w-full h-[3px] rounded ${loading ? 'bg-gray-100 animate-pulse' : 'bg-slate-200 group-hover:bg-slate-300'}`} />
-                </div>
               </div>
             );
           })}

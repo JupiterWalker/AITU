@@ -5,6 +5,7 @@
 
 <div align="center">
   <!-- 项目截图 -->
+  <img src="AITU_主页.jpg" alt="AITU 应用截图" style="max-width:900px;border:1px solid #eee;border-radius:6px;" />
   <img src="AITU 截图.jpg" alt="AITU 应用截图" style="max-width:900px;border:1px solid #eee;border-radius:6px;" />
   <br/>
   <em>界面示例：左侧多轮问答节点，右侧知识延展分支。</em>

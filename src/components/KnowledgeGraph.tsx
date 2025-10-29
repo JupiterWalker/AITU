@@ -126,11 +126,18 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
       saveTimerRef.current = window.setTimeout(async () => {
         if (!pendingRef.current) return;
         pendingRef.current = false;
-        await GraphService.updateGraph(graphId, {
-          title: graphTitleRef.current,
+        // 只有 nodes 最后一个元素有 llmResponse 才去更新
+        const lastNode = nodes[nodes.length - 1];
+        const lastContext = Array.isArray(lastNode?.data?.context) ? lastNode.data.context[lastNode.data.context.length - 1] : null;
+        if (lastContext && lastContext.llmResponse) {
+          await GraphService.updateGraph(graphId, {
+            title: Array.isArray(nodes[0].data.context) && nodes[0].data.context.length > 0
+              ? nodes[0].data.context[0].question
+              : '',
             nodes: nodes,
             edges: edges
-        });
+          });
+        }
         if (HL_DEBUG) console.log('[graph] 已自动保存 graphId=', graphId, ' nodes=', nodes.length, ' edges=', edges.length);
       }, 800); // 800ms 防抖
       return () => {

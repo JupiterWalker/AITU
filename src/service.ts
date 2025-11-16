@@ -1,8 +1,11 @@
 interface LLMRequest {
+  context_msg_index: number;
+  context_thread_id: string;
   question: string;
   context?: string;
   history?: Array<{ question: string; answer: string }>;
   model?: string; // 可选，指定使用的模型
+  thread_id?: string;
 }
 
 interface LLMResponse {
@@ -72,16 +75,20 @@ export class LLMService {
   }
 
   // 简化版本，只传问题
-  static async askQuestion(question: string, context?: string, model?: string): Promise<string> {
+  static async askQuestion(question: string, thread_id: string, model?: string, contextThreadId?: string, contextMsgIndex?: number): Promise<string> {
     const request: LLMRequest = { question };
-    if (context) {
-      request.context = context;
-    }
     if (model) {
       request.model = model;
     } else {
       request.model = 'THUDM/glm-4-9b-chat';
     }
+    if (contextThreadId) {
+      request.context_thread_id = contextThreadId;
+    }
+    if (contextMsgIndex) {
+      request.context_msg_index = contextMsgIndex;
+    }
+    request.thread_id = thread_id;
 
     const response = await this.getLLMResponse(request);
     return response.answer;

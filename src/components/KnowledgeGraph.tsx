@@ -52,11 +52,11 @@ interface KnowledgeGraphProps {
 
 export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegisterApi, bootstrapQuestion, prefillGraph }: KnowledgeGraphProps) {
 
-    const updateNodeInternals = useUpdateNodeInternals(); // ✅ 顶层调用 Hook
+  const updateNodeInternals = useUpdateNodeInternals(); // ✅ 顶层调用 Hook
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes as any);
   const [edges, setEdges, onEdgesChange] = useEdgesState([] as any[]);
-    const [currentQ, setCurrentQ] = useState('');
-    const [contextNode, setContextNode] = useState(initialNode);
+  const [currentQ, setCurrentQ] = useState('');
+  const [contextNode, setContextNode] = useState(initialNode);
   const [contextText, setContextText] = useState('');
   const [graphId, setGraphId] = useState<number | null>(null);
   const graphTitleRef = useRef<string>('新探索图');
@@ -149,135 +149,135 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
 
     const { getZoom } = useReactFlow();
 
-    /**
-     * 获取以 baseNodeId 为基节点的最后一个直接子节点的 ID
-     */
-  function getCurrentChildNodeId(currentNodes: any[], baseNodeId: string): object {
-        const regex = new RegExp(`^${baseNodeId}-(\\d+)$`);
-        let maxNum = 0;
-  currentNodes.forEach((node: any) => {
-            const match = node.id.match(regex);
-            if (match) {
-                const num = parseInt(match[1], 10);
-                if (num > maxNum) maxNum = num;
+      /**
+       * 获取以 baseNodeId 为基节点的最后一个直接子节点的 ID
+       */
+    function getCurrentChildNodeId(currentNodes: any[], baseNodeId: string): object {
+          const regex = new RegExp(`^${baseNodeId}-(\\d+)$`);
+          let maxNum = 0;
+    currentNodes.forEach((node: any) => {
+              const match = node.id.match(regex);
+              if (match) {
+                  const num = parseInt(match[1], 10);
+                  if (num > maxNum) maxNum = num;
+              }
+          });
+          console.log('getCurrentChildNodeId, baseNodeId:', baseNodeId, ', maxNum:', maxNum, ', nodes:', nodes);
+          return {
+              lastNodeId: maxNum == 0 ? null: `${baseNodeId}-${maxNum}` ,
+              newNodeId: `${baseNodeId}-${maxNum + 1}`
+          };
+      }
+
+    const addNewNodeAfterAsk = useCallback((oldNode: any, currentQ: string, isBranchNode: boolean, referenceContext: string) => {
+          const currentBaseNode = getNodeById(oldNode.id)
+          console.log('addNewNodeAfterAsk, lastNode:', currentBaseNode);
+          console.log('addNewNodeAfterAsk, currentQ:', currentQ);
+          console.log('addNewNodeAfterAsk, isBranchNode:', isBranchNode);
+          const dynamicHandleId = `dyn-handle-${Date.now()}`;
+
+          let dynamicHandleTop = selectionRef.current?.relativePosition?.dynamicHandleTop;
+          // let dynamicHandleLeft = selectionRef.current?.relativePosition?.dynamicHandleLeft;
+
+          setNodes((nodes) => nodes.map((node) => {
+            if (node.id === oldNode.id) {
+              const newHandle = {
+                id: dynamicHandleId,
+                type: 'source',
+                position: Position.Right,
+                style:{ top: dynamicHandleTop }
+              };
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  dynamicHandles: [...((node.data.dynamicHandles as any[]) || []), newHandle],
+                },
+              };
             }
-        });
-        console.log('getCurrentChildNodeId, baseNodeId:', baseNodeId, ', maxNum:', maxNum, ', nodes:', nodes);
-        return {
-            lastNodeId: maxNum == 0 ? null: `${baseNodeId}-${maxNum}` ,
-            newNodeId: `${baseNodeId}-${maxNum + 1}`
-        };
-    }
+            return node;
+          }));
 
-  const addNewNodeAfterAsk = useCallback((oldNode: any, currentQ: string, isBranchNode: boolean, referenceContext: string) => {
-        const currentBaseNode = getNodeById(oldNode.id)
-        console.log('addNewNodeAfterAsk, lastNode:', currentBaseNode);
-        console.log('addNewNodeAfterAsk, currentQ:', currentQ);
-        console.log('addNewNodeAfterAsk, isBranchNode:', isBranchNode);
-        const dynamicHandleId = `dyn-handle-${Date.now()}`;
+          updateNodeInternals(oldNode.id);
 
-        let dynamicHandleTop = selectionRef.current?.relativePosition?.dynamicHandleTop;
-        // let dynamicHandleLeft = selectionRef.current?.relativePosition?.dynamicHandleLeft;
+          const {lastNodeId, newNodeId}: any = getCurrentChildNodeId(nodes, oldNode.id);
+          const lastNode = getNodeById(lastNodeId)
 
-        setNodes((nodes) => nodes.map((node) => {
-          if (node.id === oldNode.id) {
-            const newHandle = {
-              id: dynamicHandleId,
-              type: 'source',
-              position: Position.Right,
-              style:{ top: dynamicHandleTop }
-            };
-            return {
-              ...node,
+    let positionX=(currentBaseNode?.position.x || 0) + 320;
+    let positionY=(currentBaseNode?.position.y || 0) - 150;
+          console.log('####addNewNodeAfterAsk, lastNodeId:', lastNodeId, ', newNodeId:', newNodeId, ', lastNode:', lastNode);
+      if (lastNode) {
+        positionX = lastNode.position.x + 25;
+        positionY = lastNode.position.y + (lastNode.measured?.height || 0) + 10; // 在最后一个子节点的下方
+      }
+          console.log('####addNewNodeAfterAsk, newNodeId:', newNodeId);
+          const newNode = {
+              id: newNodeId,
               data: {
-                ...node.data,
-                dynamicHandles: [...((node.data.dynamicHandles as any[]) || []), newHandle],
+                  label: getNodeLabel(undefined, currentQ, '', referenceContext),
+                  context: [{question: currentQ, llmResponse: null}],
+                  isAfterAsk: true,
+                  referenceContext: referenceContext
               },
-            };
+              position: {
+                  x: positionX,
+                  y: positionY,
+              },
+              type: isBranchNode? 'branch-markdown': 'markdown',
+              selected: true,
+              dragHandle: '.drag-handle__custom'
+          };
+          setContextNode(newNode);
+          setNodes((nds) => nds.map(node => ({ ...node, selected: false })).concat(newNode));
+    setEdges((eds: any) => [
+            ...eds,
+            {
+              id: `${oldNode.id}-${newNodeId}`,
+              source: oldNode.id,
+              target: newNodeId,
+              sourceHandle: dynamicHandleId,
+              targetHandle: isBranchNode ? 'target-left' : 'target-top',
+              type: 'smoothstep',
+            }
+          ]);
+
+          return newNodeId;
+      }, [nodes, updateNodeInternals, getCurrentChildNodeId, getNodeById, setEdges, setNodes]);
+
+      // 生成节点 label 的函数
+    const getNodeLabel = (node: any, currentQ: string, llmResponse: string | null, referenceContext: string = '') => {
+          console.log("getNodeLabel", { node, currentQ, llmResponse, referenceContext })
+        const context =
+            node && node.data && Array.isArray(node.data.context)
+                ? node.data.context
+                : [];
+
+          const fullContext = [
+              ...context[context.length - 1]?.llmResponse ? context : context.slice(0, -1),
+              {question: currentQ, llmResponse: llmResponse}
+          ];
+          let parts = []
+          if(referenceContext) {
+            parts.push(`> 问题背景: \n${referenceContext}\n`)
+            parts.push("---\n")}
+          else if (node && node.data && node.data.referenceContext) {
+            parts.push(`> 问题背景: \n${node.data.referenceContext}\n`)
+            parts.push("---\n")
           }
-          return node;
-        }));
-
-        updateNodeInternals(oldNode.id);
-
-        const {lastNodeId, newNodeId}: any = getCurrentChildNodeId(nodes, oldNode.id);
-        const lastNode = getNodeById(lastNodeId)
-
-  let positionX=(currentBaseNode?.position.x || 0) + 320;
-  let positionY=(currentBaseNode?.position.y || 0) - 150;
-        console.log('####addNewNodeAfterAsk, lastNodeId:', lastNodeId, ', newNodeId:', newNodeId, ', lastNode:', lastNode);
-    if (lastNode) {
-      positionX = lastNode.position.x + 25;
-      positionY = lastNode.position.y + (lastNode.measured?.height || 0) + 10; // 在最后一个子节点的下方
-    }
-        console.log('####addNewNodeAfterAsk, newNodeId:', newNodeId);
-        const newNode = {
-            id: newNodeId,
-            data: {
-                label: getNodeLabel(undefined, currentQ, '', referenceContext),
-                context: [{question: currentQ, llmResponse: null}],
-                isAfterAsk: true,
-                referenceContext: referenceContext
-            },
-            position: {
-                x: positionX,
-                y: positionY,
-            },
-            type: isBranchNode? 'branch-markdown': 'markdown',
-            selected: true,
-            dragHandle: '.drag-handle__custom'
-        };
-        setContextNode(newNode);
-        setNodes((nds) => nds.map(node => ({ ...node, selected: false })).concat(newNode));
-  setEdges((eds: any) => [
-          ...eds,
-          {
-            id: `${oldNode.id}-${newNodeId}`,
-            source: oldNode.id,
-            target: newNodeId,
-            sourceHandle: dynamicHandleId,
-            targetHandle: isBranchNode ? 'target-left' : 'target-top',
-            type: 'smoothstep',
-          }
-        ]);
-
-        return newNodeId;
-    }, [nodes, updateNodeInternals, getCurrentChildNodeId, getNodeById, setEdges, setNodes]);
-
-    // 生成节点 label 的函数
-  const getNodeLabel = (node: any, currentQ: string, llmResponse: string | null, referenceContext: string = '') => {
-        console.log("getNodeLabel", { node, currentQ, llmResponse, referenceContext })
-      const context =
-          node && node.data && Array.isArray(node.data.context)
-              ? node.data.context
-              : [];
-
-        const fullContext = [
-            ...context[context.length - 1]?.llmResponse ? context : context.slice(0, -1),
-            {question: currentQ, llmResponse: llmResponse}
-        ];
-        let parts = []
-        if(referenceContext) {
-          parts.push(`> 问题背景: \n${referenceContext}\n`)
-          parts.push("---\n")}
-        else if (node && node.data && node.data.referenceContext) {
-          parts.push(`> 问题背景: \n${node.data.referenceContext}\n`)
-          parts.push("---\n")
-        }
-      // 只保留 LLM 原生 markdown
-      return [
-        ...parts,
-        ...fullContext
-          .map((item) => {
-            let innerParts = [];
-            if (item.question) innerParts.push(`## 提问: ${item.question}\n`);
-            innerParts.push("---\n");
-            if (item.llmResponse) innerParts.push(`## LLM回复: \n${item.llmResponse}\n`);
-            return innerParts.join('\n');
-          })
-          .join('\n---\n')
-      ].join('');
-    }
+        // 只保留 LLM 原生 markdown
+        return [
+          ...parts,
+          ...fullContext
+            .map((item) => {
+              let innerParts = [];
+              if (item.question) innerParts.push(`## 提问: ${item.question}\n`);
+              innerParts.push("---\n");
+              if (item.llmResponse) innerParts.push(`## LLM回复: \n${item.llmResponse}\n`);
+              return innerParts.join('\n');
+            })
+            .join('\n---\n')
+        ].join('');
+      }
 
     const updateNodeAfterAsk = useCallback((question: string, newNodeId?: string) => {
       console.log("updateNodeAfterAsk", question)
@@ -309,43 +309,49 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
       } : node))
     }, [contextNode])
 
-  const handleInputSubmit = async (overrideQ?: string) => {
-    // 支持传入覆盖问题，避免初始引导时因 state 还未更新导致跳过
-    const q = (overrideQ ?? currentQ).trim();
-    console.log('handleInputSubmit, overrideQ:', overrideQ, ', currentQ:', currentQ, "final q:", q);
-    if (!contextNode || !q) return;
+    const handleInputSubmit = async (overrideQ?: string) => {
+      // 支持传入覆盖问题，避免初始引导时因 state 还未更新导致跳过
+      const q = (overrideQ ?? currentQ).trim();
+      console.log('handleInputSubmit, overrideQ:', overrideQ, ', currentQ:', currentQ, "final q:", q);
+      if (!contextNode || !q) return;
 
-    // 若是 override 提交，确保 UI 输入框清空
-    if (!overrideQ) setCurrentQ('');
+      // 若是 override 提交，确保 UI 输入框清空
+      if (!overrideQ) setCurrentQ('');
 
-    let llmResponse;
-    let optQ;
-    if (contextText) {
-      console.log('contextText 存在，准备构建带上下文的问题');
-      const oldQ = (contextNode as any).data.context?.[(contextNode as any).data.context.length - 1]?.question || '';
-      const referenceContext = `我想进一步了解 关于我刚才问你 “${oldQ}” 时你提到的 “${contextText}”`;
-      optQ = `${referenceContext}: ${q}` + "\n\n";
-      const newNodeId = addNewNodeAfterAsk(contextNode, q, true, referenceContext);
-      llmResponse = await LLMService.askQuestion(optQ);
-      updateNodeAfterResponse(q, llmResponse, newNodeId);
-    } else {
-      console.log('contextText 不存在，直接使用当前问题');
-      optQ = q;
-      updateNodeAfterAsk(q, undefined);
-      llmResponse = await LLMService.askQuestion(optQ);
-      updateNodeAfterResponse(q, llmResponse, undefined);
-    }
-    console.log('LLM Response:', llmResponse);
-    setContextText('');
-    lastContextHLRef.current = null;
-  };
+      let llmResponse;
+      let optQ;
+      
+      if (contextText) {
+        console.log('contextText 存在，准备构建带上下文的问题');
+        const oldQ = (contextNode as any).data.context?.[selectionRef.current?.scope?.qaIndex]?.question || '';
+        const referenceContext = `我想进一步了解 关于我刚才问你 “${oldQ}” 时你提到的 “${contextText}”`;
+        optQ = `${referenceContext}: ${q}` + "\n\n";
+        const newNodeId = addNewNodeAfterAsk(contextNode, q, true, referenceContext);
+        const threadId = prefillGraph?.id + "-" + newNodeId;
+        const contextThreadId = prefillGraph?.id + "-" + contextNode.id;
+        console.log("###selectionRef:",  selectionRef);
+        const contextMsgIndex = selectionRef.current?.scope?.qaIndex;
+        llmResponse = await LLMService.askQuestion(optQ, threadId, null, contextThreadId, contextMsgIndex);
+        updateNodeAfterResponse(q, llmResponse, newNodeId);
+      } else {
+        console.log('contextText 不存在，直接使用当前问题');
+        optQ = q;
+        updateNodeAfterAsk(q, undefined);
+        const threadId = prefillGraph?.id + "-" + contextNode.id;
+        llmResponse = await LLMService.askQuestion(optQ, threadId);
+        updateNodeAfterResponse(q, llmResponse, undefined);
+      }
+      console.log('LLM Response:', llmResponse);
+      setContextText('');
+      lastContextHLRef.current = null;
+    };
 
 
     // ★ CHANGED: onLabelMouseUp 接收来自子组件的 selection（含 offsets/rect），不再自己从 window 读
-  const handleMouseUp = useCallback((id: string, data: any) => {
+    const handleMouseUp = useCallback((id: string, data: any) => {
         // if(!hasSubmitted) return;
 
-  const sel: any = data?.selection;
+        const sel: any = data?.selection;
         const text = sel?.text?.trim() || '';
         if (HL_DEBUG) console.log('父模块接收到 parent.handleMouseUp', { id, sel, text });
 
@@ -576,7 +582,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
     }, [setNodes]);
 
     // 导出：nodesWithHandler（去除 handler 函数）与 edges
-  const exportGraph = useCallback(() => {
+    const exportGraph = useCallback(() => {
       const sanitizedNodes = nodesWithHandler.map(n => {
         const { onLabelMouseUp, onNodeClick, ...restData } = (n.data as any) || {};
         return {
@@ -594,58 +600,58 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
       return payload;
     }, [nodesWithHandler, edges, onGraphExport]);
 
-  const importGraph = useCallback((payload: any) => { 
-    if (!payload || !Array.isArray(payload.nodes) || !Array.isArray(payload.edges)) return; 
-    const restored = payload.nodes.map(
-      (node: any) => ({ 
-        ...node, 
-        data: { 
-          ...node.data, 
-          onLabelMouseUp: handleMouseUp, 
-          onNodeClick: handleNodeClick 
-        } 
-      })
-    ); 
-    
-    // 先设置节点，再异步设置边，确保节点及其 handles 已挂载
-    setNodes(restored);
+    const importGraph = useCallback((payload: any) => { 
+      if (!payload || !Array.isArray(payload.nodes) || !Array.isArray(payload.edges)) return; 
+      const restored = payload.nodes.map(
+        (node: any) => ({ 
+          ...node, 
+          data: { 
+            ...node.data, 
+            onLabelMouseUp: handleMouseUp, 
+            onNodeClick: handleNodeClick 
+          } 
+        })
+      ); 
+      
+      // 先设置节点，再异步设置边，确保节点及其 handles 已挂载
+      setNodes(restored);
 
-    // 使用 requestAnimationFrame 让 ReactFlow 完成一次渲染后再处理内部更新与边集合
-    requestAnimationFrame(() => {
-      // 确保缺失的动态 source handle 被重建（根据 edge.sourceHandle）
-      const edges: any[] = payload.edges || [];
-      let needNodeUpdate = false;
-      const patchedNodes = restored.map((n: any) => {
-        const dyn = Array.isArray(n.data?.dynamicHandles) ? [...n.data.dynamicHandles] : [];
-        const relatedEdges = edges.filter((e: any) => e.source === n.id && e.sourceHandle);
-        relatedEdges.forEach((e: any) => {
-          if (e.sourceHandle && !dyn.some(h => h.id === e.sourceHandle)) {
-            dyn.push({ id: e.sourceHandle, type: 'source', position: 1 /* Position.Right */, style: { top: 40 } });
-            needNodeUpdate = true;
-            console.warn('[importGraph] Reconstructed missing source handle', e.sourceHandle, 'on node', n.id);
-          }
+      // 使用 requestAnimationFrame 让 ReactFlow 完成一次渲染后再处理内部更新与边集合
+      requestAnimationFrame(() => {
+        // 确保缺失的动态 source handle 被重建（根据 edge.sourceHandle）
+        const edges: any[] = payload.edges || [];
+        let needNodeUpdate = false;
+        const patchedNodes = restored.map((n: any) => {
+          const dyn = Array.isArray(n.data?.dynamicHandles) ? [...n.data.dynamicHandles] : [];
+          const relatedEdges = edges.filter((e: any) => e.source === n.id && e.sourceHandle);
+          relatedEdges.forEach((e: any) => {
+            if (e.sourceHandle && !dyn.some(h => h.id === e.sourceHandle)) {
+              dyn.push({ id: e.sourceHandle, type: 'source', position: 1 /* Position.Right */, style: { top: 40 } });
+              needNodeUpdate = true;
+              console.warn('[importGraph] Reconstructed missing source handle', e.sourceHandle, 'on node', n.id);
+            }
+          });
+          return dyn.length !== (Array.isArray(n.data?.dynamicHandles) ? n.data.dynamicHandles.length : 0)
+            ? { ...n, data: { ...n.data, dynamicHandles: dyn } }
+            : n;
         });
-        return dyn.length !== (Array.isArray(n.data?.dynamicHandles) ? n.data.dynamicHandles.length : 0)
-          ? { ...n, data: { ...n.data, dynamicHandles: dyn } }
-          : n;
+        if (needNodeUpdate) {
+          setNodes(patchedNodes);
+        }
+        console.log('Restored nodes:', patchedNodes);
+        patchedNodes.forEach((n: any) => updateNodeInternals(n.id));
+        console.log('Restored edges (deferred):', edges);
+        setEdges(edges as any);
       });
-      if (needNodeUpdate) {
-        setNodes(patchedNodes);
-      }
-      console.log('Restored nodes:', patchedNodes);
-      patchedNodes.forEach((n: any) => updateNodeInternals(n.id));
-      console.log('Restored edges (deferred):', edges);
-      setEdges(edges as any);
-    });
 
-    
-    
-    
-    onGraphImport?.(payload); 
-    
+      
+      
+      
+      onGraphImport?.(payload); 
+      
 
-  }, [updateNodeInternals, handleMouseUp, handleNodeClick, setNodes, setEdges, onGraphImport]
-  );
+        }, [updateNodeInternals, handleMouseUp, handleNodeClick, setNodes, setEdges, onGraphImport]
+      );
 
     // 将 API 注册给父组件
     useEffect(() => {

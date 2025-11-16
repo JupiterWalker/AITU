@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>AITU 知识图谱对话实验平台</h1>
+  <h1>AITU 知识图谱对话平台</h1>
   <p>交互式多轮问答 + 节点式知识延展 + LLM 语义补全。前端 React / Vite / Tailwind，后端 FastAPI + LangChain + SiliconFlow。</p>
 </div>
 
@@ -47,6 +47,14 @@ backend/ (FastAPI)
 1. 用户在某节点输入问题 → 若包含选区“知识延伸”则创建分支节点 → 写入 context 占位 (question, llmResponse: null)
 2. 前端调用后端 `/ask` → LLM 回复 → 更新目标节点 context 最后一条 → 渲染 Markdown / 高亮
 3. 用户选中文本 → 计算 offsets → 临时显示“知识延伸”工具条 → 点击生成新分支节点 & 保存高亮
+
+
+## Docker 部署
+
+```bash
+docker compose build
+docker compose up -d
+```
 
 ## 🔌 后端环境 (Backend Setup)
 

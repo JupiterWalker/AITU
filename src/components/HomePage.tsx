@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react';
 import { GraphService, type GraphBasic } from '../service';
+import { useNavigate } from 'react-router-dom';
 // 无需显式导入 React（Vite + TSX 自动处理），保持文件纯静态组件。
 
 // 静态首页，含居中标题、输入框占位、下方四个骨架卡片
 // 使用 Tailwind（项目已集成）来快速布局与灰色占位样式。
 // 后续可以将搜索/问题输入逻辑接入真正的业务；当前仅静态展示。
-interface HomePageProps {
-  onSubmitQuestion?: (q: string) => void;
-  onSelectExistingGraph?: (graph: any) => void;
-}
-
-export default function HomePage({ onSubmitQuestion, onSelectExistingGraph }: HomePageProps) {
+export default function HomePage() {
   const [value, setValue] = useState('');
   const [graphs, setGraphs] = useState<GraphBasic[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
@@ -49,8 +46,7 @@ export default function HomePage({ onSubmitQuestion, onSelectExistingGraph }: Ho
       });
 
       if (createdGraph) {
-        onSubmitQuestion?.(q);
-        onSelectExistingGraph?.(createdGraph);
+        navigate(`/graph/${createdGraph.id}?q=${encodeURIComponent(q)}`);
       }
     }
   };
@@ -85,7 +81,7 @@ export default function HomePage({ onSubmitQuestion, onSelectExistingGraph }: Ho
                 onClick={async () => {
                   if (loading) return;
                   const detail = await GraphService.getGraph(item.id);
-                  if (detail) onSelectExistingGraph?.(detail);
+                  if (detail) navigate(`/graph/${detail.id}`);
                 }}
               >
                 {/* 上方主骨架占位或缩略图位 */}

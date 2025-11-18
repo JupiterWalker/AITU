@@ -46,7 +46,7 @@ def ask_question(req: AskRequest):
     
     if not req.thread_id:
         raise HTTPException(status_code=400, detail="缺少 thread_id")
-    
+
     context_msgs = []
     if req.context_thread_id:
         context_config = {"configurable": {"thread_id": req.context_thread_id}}
@@ -55,18 +55,6 @@ def ask_question(req: AskRequest):
         context_msgs = msgs[req.context_msg_index*2: req.context_msg_index*2+2]
 
 
-    # theme_id = str(uuid4())
-    # root_node_id = str(uuid4())
-    # now = datetime.utcnow().isoformat()
-
-    # themes[theme_id] = {
-    #     "id": theme_id,
-    #     "title": req.question,
-    #     "created_at": now,
-    # }
-
-
-    # print(f"主题ID: {theme_id}, 根节点ID: {root_node_id}, 问题: {req.question}")
     model = SiliconFlowChatModel(model=req.model)
     
     

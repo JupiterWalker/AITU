@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:99ba1aab0d3a96727b4ff7f1a3d937dac96eafee410834bf63bff40a4079e2a3"
+content_hash = "sha256:d088633af4fc2c704ef4222fed5bb0067c16dc9e08d14640fa38880a6877193f"
 
 [[metadata.targets]]
 requires_python = "==3.13.*"
@@ -816,6 +816,19 @@ files = [
     {file = "sqlalchemy-2.0.42-cp313-cp313-win_amd64.whl", hash = "sha256:eb9905f7f1e49fd57a7ed6269bc567fcbbdac9feadff20ad6bd7707266a91577"},
     {file = "sqlalchemy-2.0.42-py3-none-any.whl", hash = "sha256:defcdff7e661f0043daa381832af65d616e060ddb54d3fe4476f51df7eaa1835"},
     {file = "sqlalchemy-2.0.42.tar.gz", hash = "sha256:160bedd8a5c28765bd5be4dec2d881e109e33b34922e50a3b881a7681773ac5f"},
+]
+
+[[package]]
+name = "sqlmodel"
+version = "0.0.27"
+summary = ""
+dependencies = [
+    "pydantic",
+    "sqlalchemy",
+]
+files = [
+    {file = "sqlmodel-0.0.27-py3-none-any.whl", hash = "sha256:667fe10aa8ff5438134668228dc7d7a08306f4c5c4c7e6ad3ad68defa0e7aa49"},
+    {file = "sqlmodel-0.0.27.tar.gz", hash = "sha256:ad1227f2014a03905aef32e21428640848ac09ff793047744a73dfdd077ff620"},
 ]
 
 [[package]]

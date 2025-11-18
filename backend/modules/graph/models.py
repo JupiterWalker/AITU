@@ -5,5 +5,5 @@ import datetime
 class Graph(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     title: str = Field(index=True, max_length=200)
-    data: str = Field()
+    data: str = Field()  # JSON serialized nodes/edges
     exported_at: str = Field(default_factory=lambda: datetime.datetime.utcnow().isoformat())

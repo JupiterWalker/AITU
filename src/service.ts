@@ -76,7 +76,11 @@ export class LLMService {
 
   // 简化版本，只传问题
   static async askQuestion(question: string, thread_id: string, model?: string, contextThreadId?: string, contextMsgIndex?: number): Promise<string> {
-    const request: LLMRequest = { question };
+    const request: LLMRequest = {
+      question,
+      context_msg_index: 0,
+      context_thread_id: '',
+    };
     if (model) {
       request.model = model;
     } else {
@@ -173,6 +177,77 @@ export class GraphService {
     } catch (e) {
       console.error('更新图失败', e);
       return false;
+    }
+  }
+}
+
+// 用户相关 API
+export interface UserPublic {
+  id: number;
+  user_name: string;
+  ad_user?: string | null;
+  ad_api_key?: string | null;
+  ad_model?: string | null;
+  ad_token?: string | null;
+}
+
+export class UserService {
+  static async getUserIdByToken(token: string): Promise<number | null> {
+    try {
+      const res = await fetch(`${LLM_BASE_URL}/users/token/${encodeURIComponent(token)}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.id ?? null;
+    } catch (e) {
+      console.error('token 验证失败', e);
+      return null;
+    }
+  }
+
+  static async updateCredentials(userId: number, user_name: string, password: string): Promise<UserPublic | null> {
+    try {
+      const res = await fetch(`${LLM_BASE_URL}/users/${userId}/credentials`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_name, password })
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.error('更新凭证失败', e);
+      return null;
+    }
+  }
+
+  static async createUser(user_name: string, password: string, token?: string): Promise<UserPublic | null> {
+    try {
+      const body: any = { user_name, password };
+      if (token) body.ad_token = token;
+      const res = await fetch(`${LLM_BASE_URL}/users/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.error('创建用户失败', e);
+      return null;
+    }
+  }
+
+  static async login(user_name: string, password: string): Promise<UserPublic | null> {
+    try {
+      const res = await fetch(`${LLM_BASE_URL}/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_name, password })
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.error('登录失败', e);
+      return null;
     }
   }
 }

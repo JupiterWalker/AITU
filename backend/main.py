@@ -4,11 +4,13 @@ from starlette.middleware.cors import CORSMiddleware
 
 # 兼容直接运行 (python backend/main.py) 与包方式 (python -m backend.main)
 try:
-    from .chat import chat_router
-    from .graphs import graphs_router  # 新增探索图路由
+    from .modules.interaction.router import router as interaction_router
+    from .modules.graph.router import router as graphs_router
+    from .modules.user.router import router as user_router
 except ImportError:  # fallback 当没有包上下文时
-    from chat import chat_router  # type: ignore
-    from graphs import graphs_router  # type: ignore
+    from modules.interaction.router import router as interaction_router  # type: ignore
+    from modules.graph.router import router as graphs_router  # type: ignore
+    from modules.user.router import router as user_router  # type: ignore
 
 app = FastAPI()
 app.add_middleware(
@@ -28,9 +30,10 @@ async def root():
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
 
-# 包含 chat_router 的路由
-app.include_router(chat_router)
+# 注册模块化路由
+app.include_router(interaction_router)
 app.include_router(graphs_router)
+app.include_router(user_router)
 
 
 if __name__ == "__main__":

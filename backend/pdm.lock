@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:51514e8c466c050b77286a24df9b32e6bcf3e2621a2d797870cc905473490464"
+content_hash = "sha256:23fca04901189441681610dc804fc61d1798e924df8f2a8cce136b621452860c"
 
 [[metadata.targets]]
 requires_python = "==3.13.*"
@@ -428,6 +428,22 @@ files = [
 ]
 
 [[package]]
+name = "langchain-openai"
+version = "1.0.3"
+requires_python = "<4.0.0,>=3.10.0"
+summary = "An integration package connecting OpenAI and LangChain"
+groups = ["default"]
+dependencies = [
+    "langchain-core<2.0.0,>=1.0.2",
+    "openai<3.0.0,>=1.109.1",
+    "tiktoken<1.0.0,>=0.7.0",
+]
+files = [
+    {file = "langchain_openai-1.0.3-py3-none-any.whl", hash = "sha256:18d254dbe946d9e9fe6d31416c60c8fc06513427f6e8d8c372e015345e1e17f6"},
+    {file = "langchain_openai-1.0.3.tar.gz", hash = "sha256:e9df56540c1118002ab5306208c4845715e9209779c8a7ac9037eded98435fdc"},
+]
+
+[[package]]
 name = "langgraph"
 version = "1.0.3"
 requires_python = ">=3.10"
@@ -582,23 +598,23 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.98.0"
-requires_python = ">=3.8"
+version = "2.8.1"
+requires_python = ">=3.9"
 summary = "The official Python library for the openai API"
 groups = ["default"]
 dependencies = [
     "anyio<5,>=3.5.0",
     "distro<2,>=1.7.0",
     "httpx<1,>=0.23.0",
-    "jiter<1,>=0.4.0",
+    "jiter<1,>=0.10.0",
     "pydantic<3,>=1.9.0",
     "sniffio",
     "tqdm>4",
     "typing-extensions<5,>=4.11",
 ]
 files = [
-    {file = "openai-1.98.0-py3-none-any.whl", hash = "sha256:b99b794ef92196829120e2df37647722104772d2a74d08305df9ced5f26eae34"},
-    {file = "openai-1.98.0.tar.gz", hash = "sha256:3ee0fcc50ae95267fd22bd1ad095ba5402098f3df2162592e68109999f685427"},
+    {file = "openai-2.8.1-py3-none-any.whl", hash = "sha256:c6c3b5a04994734386e8dad3c00a393f56d3b68a27cd2e8acae91a59e4122463"},
+    {file = "openai-2.8.1.tar.gz", hash = "sha256:cb1b79eef6e809f6da326a7ef6038719e35aa944c42d081807bfa1be8060f15f"},
 ]
 
 [[package]]

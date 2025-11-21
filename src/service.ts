@@ -26,8 +26,6 @@ if (import.meta.env.VITE_LLM_BASE_URL) {
   LLM_BASE_URL = "http://127.0.0.1:8000";
 }
 
-
-
 console.log('under browser?:', typeof window !== 'undefined');
 console.log('LLM_BASE_URL:', LLM_BASE_URL);
 
@@ -126,7 +124,8 @@ interface GraphUpdatePayload {
 export class GraphService {
   static async listGraphs(): Promise<GraphBasic[]> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/graphs`, {
+      // 加尾斜杠避免 FastAPI 重定向 /graphs -> /graphs/ 产生混合内容问题
+      const res = await fetch(`${LLM_BASE_URL}/graphs/`, {
         headers: { 'Content-Type': 'application/json' }
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -152,7 +151,8 @@ export class GraphService {
 
   static async createGraph(payload: GraphCreatePayload): Promise<GraphDetail | null> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/graphs`, {
+      // POST 也加尾斜杠避免重定向
+      const res = await fetch(`${LLM_BASE_URL}/graphs/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -206,7 +206,7 @@ export class UserService {
 
   static async updateCredentials(userId: number, user_name: string, password: string): Promise<UserPublic | null> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/users/${userId}/credentials`, {
+      const res = await fetch(`${LLM_BASE_URL}/users/${userId}/credentials/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_name, password })
@@ -238,7 +238,7 @@ export class UserService {
 
   static async login(user_name: string, password: string): Promise<UserPublic | null> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/users/login`, {
+      const res = await fetch(`${LLM_BASE_URL}/users/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_name, password })

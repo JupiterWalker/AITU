@@ -11,4 +11,4 @@ COPY backend ./backend
 
 EXPOSE 8000
 # 使用包导入路径，确保相对导入 (.chat) 生效
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--forwarded-allow-ips=*", "--proxy-headers"]

@@ -25,7 +25,7 @@ def get_user_id_by_token(token: str, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="User not found")
     return UserTokenLookup(id=user.id or 0)
 
-@router.put("/{user_id}/credentials", response_model=UserPublic)
+@router.put("/{user_id}/credentials/", response_model=UserPublic)
 def update_credentials(user_id: int, body: UserCredentialUpdate, session: Session = Depends(get_session)):
     user = session.get(User, user_id)
     if not user:
@@ -49,7 +49,7 @@ def create_user(body: UserCreate, session: Session = Depends(get_session)):
     return UserPublicModel(id=u.id or 0, user_name=u.user_name, ad_user=u.ad_user,
                            ad_api_key=u.ad_api_key, ad_model=u.ad_model, ad_token=u.ad_token)
 
-@router.post("/login", response_model=UserPublic)
+@router.post("/login/", response_model=UserPublic)
 def login(body: UserLogin, session: Session = Depends(get_session)):
     user = session.exec(select(User).where(User.user_name == body.user_name)).first()
     if not user or user.password != body.password:

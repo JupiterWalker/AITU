@@ -6,8 +6,12 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 try:
     from ...llm.model import SiliconFlowChatModel
-except ImportError:
-    from llm.model import SiliconFlowChatModel  # type: ignore
+except ImportError as e:
+    msg = repr(e)
+    if ("attempted relative import" in msg) or ("parent package" in msg):
+        from llm.model import SiliconFlowChatModel  # type: ignore
+    else:
+        raise
 
 checkpointer = InMemorySaver()
 router = APIRouter(prefix="", tags=["interaction"])

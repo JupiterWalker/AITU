@@ -4,10 +4,16 @@ from sqlmodel import Session, select
 import datetime
 from .models import Graph
 from .schemas import GraphCreate, GraphUpdate, GraphBasic, GraphDetail
+# Import db utilities; distinguish between package context and direct script run.
 try:
     from ...db import init_db, get_session  # package context (backend.modules.graph)
-except ImportError:  # script context when cwd == backend
-    from db import init_db, get_session  # type: ignore
+except ImportError as e:
+    # Only fallback when it's a relative import issue (no parent package); otherwise re-raise original error
+    msg = repr(e)
+    if ("attempted relative import" in msg) or ("parent package" in msg):
+        from db import init_db, get_session  # type: ignore
+    else:
+        raise
 from .utils import pack_graph, unpack_graph
 
 router = APIRouter(prefix="/graphs", tags=["graphs"])

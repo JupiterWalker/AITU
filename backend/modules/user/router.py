@@ -5,8 +5,12 @@ from .models import User, UserPublic as UserPublicModel
 from .schemas import UserPublic, UserTokenLookup, UserCredentialUpdate, UserCreate, UserLogin
 try:
     from ...db import init_db, get_session  # package context (backend.modules.user)
-except ImportError:  # script context when imported as modules.user.router
-    from db import init_db, get_session  # type: ignore
+except ImportError as e:  # only fallback if it's a missing parent package situation
+    msg = repr(e)
+    if ("attempted relative import" in msg) or ("parent package" in msg):
+        from db import init_db, get_session  # type: ignore
+    else:
+        raise
 
 router = APIRouter(prefix="/users", tags=["users"])
 

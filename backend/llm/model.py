@@ -18,20 +18,23 @@ if not SILICONFLOW_API_KEY:
     # 提示缺失而不打印泄露
     raise RuntimeError("Missing SILICONFLOW_API_KEY. Create backend/llm/.env from .env.example and set the key.")
 
+BASE_URL = os.getenv("BASE_URL", "https://api.siliconflow.cn/v1")
+
+
 # 封装 SiliconFlow 为 LangChain 兼容的模型
 class SiliconFlowChatModel(ChatOpenAI):
     def __init__(self, **kwargs):
         # 硬编码 SiliconFlow 的 Base URL 和 API Key
         super().__init__(
             api_key=SILICONFLOW_API_KEY,
-            base_url="https://api.siliconflow.cn/v1",
+            base_url=BASE_URL,
             **kwargs
         )
 
 # model = SiliconFlowChatModel(model="THUDM/glm-4-9b-chat")
 
 # model = SiliconFlowChatModel(model="THUDM/GLM-Z1-32B-0414")
-model = SiliconFlowChatModel(model="deepseek-ai/DeepSeek-V3")
+# model = SiliconFlowChatModel(model="deepseek-ai/DeepSeek-V3")
 
 # 使用示例
 # if __name__ == "__main__":

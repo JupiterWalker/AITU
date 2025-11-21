@@ -15,16 +15,20 @@ export default function HomePage() {
   const [graphs, setGraphs] = useState<GraphBasic[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     // 初次进入检查是否已有登录缓存
-    const cached = localStorage.getItem('user_id');
-    if (!cached) {
+  const cachedId = localStorage.getItem('user_id');
+  const cachedName = localStorage.getItem('user_name');
+  if (!cachedId) {
       setShowLogin(true);
       setLoading(false); // 暂停图加载直到登录完成
       return;
     }
+  if (cachedName) setUserName(cachedName);
   // 已有缓存 user_id，可在后续请求中使用（当前未直接读取）
     let cancelled = false;
     (async () => {
@@ -67,14 +71,19 @@ export default function HomePage() {
   return (
     <div className="w-screen h-screen bg-white flex items-center justify-center p-4">
       {/* 整体下移：增加顶部内边距 */}
-      <div className="w-full max-w-5xl h-[90vh] rounded-xl flex flex-col items-center pt-72 relative">
+  <div className="w-full max-w-5xl h-[90vh] rounded-xl flex flex-col items-center pt-60 relative">
         {showLogin && (
           <LoginModal
             onClose={() => { /* 强制登录，不允许关闭除非成功 */ }}
-            onLoggedIn={(id) => {
+            onLoggedIn={(id, name) => {
+              // NOTE: LoginModal 目前只返回 id; 若要同时回传 userName 需在其内部修改
+              // 这里暂时依赖用户在第二步输入的用户名保存在 localStorage，由 LoginModal 修改为同时回传用户名再完善
+              // 由于现结构无法直接获取该值，这里读取可能已写入的 localStorage
+              console.log('用户登录成功，name:', name);
+              localStorage.setItem('user_name', name);
+              if (name) setUserName(name);
               localStorage.setItem('user_id', String(id));
               setShowLogin(false);
-              // 登录后加载图
               (async () => {
                 setLoading(true);
                 const list = await GraphService.listGraphs();
@@ -84,6 +93,47 @@ export default function HomePage() {
             }}
           />
         )}
+        {/* 顶部右上角用户信息与菜单 */}
+        {!showLogin && userName && (
+          <div className="fixed top-4 right-2 flex items-center gap-2 select-none z-50">
+            <div
+              onClick={() => setMenuOpen(o => !o)}
+              className="flex items-center gap-2 px-3 py-2 rounded-full bg-indigo-50 hover:bg-indigo-100 cursor-pointer shadow-sm border border-indigo-100"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white text-sm font-semibold">
+                {userName.slice(0,1).toUpperCase()}
+              </div>
+              <span className="text-sm text-gray-700">你好, {userName}</span>
+              <svg className={`w-4 h-4 text-gray-500 transition-transform ${menuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+              </svg>
+            </div>
+            {menuOpen && (
+              <div className="absolute top-14 right-0 w-44 bg-white border border-gray-200 rounded-md shadow-lg py-2 z-10">
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => {
+                    // 退出登录
+                    localStorage.removeItem('user_id');
+                    localStorage.removeItem('user_name');
+                    setUserName(null);
+                    setMenuOpen(false);
+                    setShowLogin(true);
+                  }}
+                >退出登录</button>
+              </div>
+            )}
+          </div>
+        )}
+        {/* 独立 Slogan 置于上方 */}
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 text-center px-4">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-transparent bg-clip-text drop-shadow-sm">
+            A.I. Thought Universe
+          </h2>
+          <p className="mt-2 text-sm md:text-base text-gray-500 font-medium">
+            — Powered by <span className="text-indigo-600 font-semibold">AI</span>, Designed for <span className="text-pink-600 font-semibold">Humans</span>.
+          </p>
+        </div>
         {/* 中间标题与输入框 */}
         <div className="flex flex-col items-center w-full px-4">
           <h1 className="text-2xl font-medium text-gray-700 mb-10 tracking-wide">

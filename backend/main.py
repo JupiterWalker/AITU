@@ -3,14 +3,32 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 # 兼容直接运行 (python backend/main.py) 与包方式 (python -m backend.main)
+import sys, traceback, importlib.util
+print("[debug] __package__ =", __package__)
+print("[debug] sys.path =", sys.path)
+
+def _show(e, tag):
+    print(f"[debug] {tag} failed: {type(e).__name__}: {e}")
+    traceback.print_exc()
+
 try:
     from .modules.interaction.router import router as interaction_router
     from .modules.graph.router import router as graphs_router
     from .modules.user.router import router as user_router
-except ImportError:  # fallback 当没有包上下文时
-    from modules.interaction.router import router as interaction_router  # type: ignore
-    from modules.graph.router import router as graphs_router  # type: ignore
-    from modules.user.router import router as user_router  # type: ignore
+except ImportError as e:
+    # 仅当确实是“没有父包”才尝试 fallback；否则输出真实错误
+    if "__package__ is None" in repr(e) or "attempted relative import" in repr(e):
+        _show(e, "relative import (no package)")
+        try:
+            from modules.interaction.router import router as interaction_router  # type: ignore
+            from modules.graph.router import router as graphs_router  # type: ignore
+            from modules.user.router import router as user_router  # type: ignore
+        except ImportError as e2:
+            _show(e2, "absolute fallback")
+            raise
+    else:
+        _show(e, "relative import (internal)")
+        raise
 
 app = FastAPI()
 app.add_middleware(

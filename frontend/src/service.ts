@@ -57,7 +57,7 @@ export class LLMService {
 
   static async getLLMResponse(request: LLMRequest): Promise<LLMResponse> {
     try {
-      const response = await this.request<LLMResponse>('/interaction/ask', {
+      const response = await this.request<LLMResponse>('/api/v1/interaction/ask', {
         method: 'POST',
         body: JSON.stringify(request),
       });

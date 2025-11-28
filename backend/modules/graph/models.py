@@ -7,3 +7,4 @@ class Graph(SQLModel, table=True):
     title: str = Field(index=True, max_length=200)
     data: str = Field()  # JSON serialized nodes/edges
     exported_at: str = Field(default_factory=lambda: datetime.datetime.utcnow().isoformat())
+    owner_id: int | None = Field(default=None, foreign_key="user.id")

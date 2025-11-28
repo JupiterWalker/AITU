@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from datetime import datetime, timedelta
 from sqlmodel import Session, select
 
@@ -30,7 +30,7 @@ def get_user_id_by_token(token: str, session: Session = Depends(get_session)):
     return UserTokenLookup(id=user.id or 0)
 
 @router.put("/{user_id}/register/", response_model=UserPublic)
-def update_credentials(user_id: int, body: UserCredentialUpdate, session: Session = Depends(get_session)):
+def update_credentials(user_id: int, body: UserCredentialUpdate, response: Response, session: Session = Depends(get_session)):
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -40,12 +40,14 @@ def update_credentials(user_id: int, body: UserCredentialUpdate, session: Sessio
     access_token = create_access_token(
         data={"sub": user.user_name}, expires_delta=access_token_expires
     )
+    # 将 token 放入响应 Header，可同时保留 body 中字段
+    response.headers["Authorization"] = f"Bearer {access_token}"
+    response.headers["X-Access-Token"] = access_token  # 可选自定义 header
     return UserPublicModel(id=user.id or 0, user_name=user.user_name, ad_user=user.ad_user,
-                           ad_api_key=user.ad_api_key, ad_model=user.ad_model, access_token=access_token,
-                           token_type="bearer")
+                           ad_api_key=user.ad_api_key, ad_model=user.ad_model)
 
 @router.post("/login/", response_model=UserPublic)
-def login(body: UserLogin, session: Session = Depends(get_session)):
+def login(body: UserLogin, response: Response, session: Session = Depends(get_session)):
     user = authenticate_user(body.user_name, body.password, session)
     if not user:
         raise HTTPException(
@@ -58,6 +60,8 @@ def login(body: UserLogin, session: Session = Depends(get_session)):
     access_token = create_access_token(
         data={"sub": user.user_name}, expires_delta=access_token_expires
     )
+    # 设置 Header
+    response.headers["Authorization"] = f"Bearer {access_token}"
+    response.headers["X-Access-Token"] = access_token
     return UserPublicModel(id=user.id or 0, user_name=user.user_name, ad_user=user.ad_user,
-                           ad_api_key=user.ad_api_key, ad_model=user.ad_model, access_token=access_token,
-                           token_type="bearer")
+                           ad_api_key=user.ad_api_key, ad_model=user.ad_model)

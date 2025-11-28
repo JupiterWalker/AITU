@@ -10,12 +10,12 @@ import {
     useUpdateNodeInternals,
     useReactFlow
 } from '@xyflow/react';
-import ChatBox from './ChatBox';
+import ChatBox from './ChatBox.tsx';
 import {LLMService, GraphService} from "../service.ts";
 import './KnowlegeGraph.css';
 import 'katex/dist/katex.min.css' // 公式样式
 import {
-getAllowedTextFromNode} from '../utils/markdownHighlightUtils';
+getAllowedTextFromNode} from '../utils/markdownHighlightUtils.tsx';
 import { MarkdownNode, BranchMarkdownNode } from './Nodes.tsx';
 // 扩展节点运行期数据，避免 TS 对额外字段报错
 import type { Node } from '@xyflow/react';

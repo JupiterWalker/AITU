@@ -21,9 +21,9 @@ export default function HomePage() {
 
   useEffect(() => {
     // 初次进入检查是否已有登录缓存
-  const cachedId = localStorage.getItem('user_id');
+  const cachedToken = localStorage.getItem('access_token');
   const cachedName = localStorage.getItem('user_name');
-  if (!cachedId) {
+  if (!cachedToken) {
       setShowLogin(true);
       setLoading(false); // 暂停图加载直到登录完成
       return;
@@ -33,8 +33,7 @@ export default function HomePage() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const userId = Number(cachedId);
-      const list = await GraphService.listGraphs(userId);
+      const list = await GraphService.listGraphs();
       if (!cancelled) {
         setGraphs(list);
         setLoading(false);
@@ -76,18 +75,18 @@ export default function HomePage() {
         {showLogin && (
           <LoginModal
             onClose={() => { /* 强制登录，不允许关闭除非成功 */ }}
-            onLoggedIn={(id, name) => {
+            onLoggedIn={(name, access_token) => {
               // NOTE: LoginModal 目前只返回 id; 若要同时回传 userName 需在其内部修改
               // 这里暂时依赖用户在第二步输入的用户名保存在 localStorage，由 LoginModal 修改为同时回传用户名再完善
               // 由于现结构无法直接获取该值，这里读取可能已写入的 localStorage
-              console.log('用户登录成功，name:', name);
+              console.log('用户登录成功, name:', name);
               localStorage.setItem('user_name', name);
               if (name) setUserName(name);
-              localStorage.setItem('user_id', String(id));
+              localStorage.setItem('access_token', String(access_token));
               setShowLogin(false);
               (async () => {
                 setLoading(true);
-                const list = await GraphService.listGraphs(id);
+                const list = await GraphService.listGraphs();
                 setGraphs(list);
                 setLoading(false);
               })();

@@ -3,7 +3,7 @@ import { UserService } from '../service';
 
 interface LoginModalProps {
   onClose: () => void;
-  onLoggedIn: (userId: number, name: string) => void;
+  onLoggedIn: (name: string, access_token: string) => void;
 }
 
 // 两步弹窗：1) 输入 token 验证 2) 设置用户名密码（若需要）
@@ -35,10 +35,10 @@ export default function LoginModal({ onClose, onLoggedIn }: LoginModalProps) {
       return;
     }
     setLoading(true); setError(null);
-    const updated = await UserService.updateCredentials(userId, userName.trim(), password);
+    const access_token = await UserService.updateCredentials(userId, userName.trim(), password);
     setLoading(false);
-    if (!updated) { setError('更新失败'); return; }
-    onLoggedIn(userId, userName.trim());
+    if (!access_token) { setError('更新失败'); return; }
+    onLoggedIn(userName.trim(), access_token);
     onClose();
   };
 
@@ -130,10 +130,10 @@ export default function LoginModal({ onClose, onLoggedIn }: LoginModalProps) {
             <button
               onClick={async () => {
                 setLoading(true); setError(null);
-                const logged = await UserService.login(userName.trim(), password);
+                const access_token = await UserService.login(userName.trim(), password);
                 setLoading(false);
-                if (!logged) { setError('登录失败'); return; }
-                onLoggedIn(logged.id, userName.trim());
+                if (!access_token) { setError('登录失败'); return; }
+                onLoggedIn(userName.trim(), access_token);
                 onClose();
               }}
               disabled={!userName || !password || loading}

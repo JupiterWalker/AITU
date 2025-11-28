@@ -3,16 +3,16 @@ import ReactMarkdown from "react-markdown";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
-import { getOffsetsWithin, rehypeHighlightRanges, CodeBlock, withHandles } from "../utils/markdownHighlightUtils";
-import {HL_DEBUG } from "./KnowledgeGraph";
-import { TypingIndicator } from "./TypingIndicator";
+import { getOffsetsWithin, rehypeHighlightRanges, CodeBlock, withHandles } from "../utils/markdownHighlightUtils.tsx";
+import {HL_DEBUG } from "./KnowledgeGraph.tsx";
+import { TypingIndicator } from "./TypingIndicator.tsx";
 import type { HandleConfig } from './Interface.tsx';
-import type { CustomNodeProps } from "./Interface";
+import type { CustomNodeProps } from "./Interface.tsx";
 import {
     Position
 } from '@xyflow/react';
-import rehypeWrapQuestion from '../markdown-plugins/rehypeWrapQuestion';
-import { QuestionLabel } from './QuestionLabel';
+import rehypeWrapQuestion from '../markdown-plugins/rehypeWrapQuestion.ts';
+import { QuestionLabel } from './QuestionLabel.tsx';
 
 
 // ★ CHANGED: 核心节点组件 —— 在节点内部计算选区偏移，并通过 data.onLabelMouseUp 往外抛

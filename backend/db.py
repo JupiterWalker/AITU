@@ -5,10 +5,10 @@ import os
 
 DB_PATH = Path(__file__).parent / 'data' / 'graphs.db'
 _default_sqlite_url = f'sqlite:///{DB_PATH}'
-_default_postgresql_url = "postgresql+psycopg://xxx:xxx@localhost:5432/aitu_dev"
+# _default_postgresql_url = "postgresql+psycopg://aitu:aitu123@localhost:5432/aitu_dev"
 
 # 优先使用环境变量 DATABASE_URL；若不存在则回退本地 sqlite
-DATABASE_URL = os.getenv("DATABASE_URL", _default_postgresql_url)
+DATABASE_URL = os.getenv("DATABASE_URL", _default_sqlite_url)
 
 _is_sqlite = DATABASE_URL.startswith("sqlite")
 
@@ -56,7 +56,7 @@ def init_db():
 
 
 def get_session():
-    """FastAPI 依赖：使用 yield 方式自动关闭 Session，避免连接泄漏导致 Pool 耗尽。
+    """FastAPI 依赖：使用 yield 方式自动关闭 Session,避免连接泄漏导致 Pool 耗尽。
 
     使用方式:
         def endpoint(session: Session = Depends(get_session)):

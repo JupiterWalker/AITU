@@ -1,8 +1,12 @@
 from __future__ import annotations
 from fastapi import APIRouter, HTTPException
+from fastapi.params import Depends
 from pydantic import BaseModel
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
+
+from backend.core.security import get_current_user
+from backend.modules.user.models import User
 
 try:
     from ...llm.model import SiliconFlowChatModel
@@ -27,7 +31,7 @@ class AskResponse(BaseModel):
     answer: str
 
 @router.post("/ask", response_model=AskResponse)
-def ask_question(req: AskRequest):
+def ask_question(req: AskRequest, current_user: User = Depends(get_current_user)):
     if not req.question.strip():
         raise HTTPException(status_code=400, detail="问题不能为空")
     if not req.thread_id:
@@ -39,8 +43,9 @@ def ask_question(req: AskRequest):
         saved = checkpointer.get(context_config)
         msgs = saved.get("channel_values").get("messages")
         context_msgs = msgs[req.context_msg_index*2: req.context_msg_index*2+2]
+    
 
-    model = SiliconFlowChatModel(model=req.model)
+    model = SiliconFlowChatModel(model=current_user.ad_model, api_key=current_user.ad_api_key)
     agent = create_agent(
         model=model,
         tools=[],

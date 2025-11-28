@@ -26,7 +26,7 @@ class SiliconFlowChatModel(ChatOpenAI):
     def __init__(self, **kwargs):
         # 硬编码 SiliconFlow 的 Base URL 和 API Key
         super().__init__(
-            api_key=SILICONFLOW_API_KEY,
+            # api_key=SILICONFLOW_API_KEY,
             base_url=BASE_URL,
             **kwargs
         )

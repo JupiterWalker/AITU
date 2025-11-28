@@ -37,6 +37,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],  # 允许所有方法，包括 OPTIONS、POST、GET 等
     allow_headers=["*"],  # 允许所有 headers（包括 Content-Type）
+    expose_headers=["Authorization", "X-Access-Token"],  # 允许前端读取这些响应头
 )
 
 @app.get("/")

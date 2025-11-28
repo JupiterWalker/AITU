@@ -21,7 +21,7 @@ def test_login_success(client: TestClient):
     resp = client.post("/users/login/", json={"user_name": "alice", "password": "secret"})
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    assert "access_token" in data
+    assert "authorization" in resp.headers
 
 
 def test_login_fail_wrong_password(client: TestClient):
@@ -42,5 +42,4 @@ def test_register_success(client: TestClient):
 
     resp = client.put(f"/users/{u.id}/register/", json={"user_name": "alice", "password": "secret"})
     assert resp.status_code == 200, resp.text
-    data = resp.json()
-    assert "access_token" in data
+    assert "authorization" in resp.headers

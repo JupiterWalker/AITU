@@ -25,7 +25,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 async def get_current_user(
     token = Depends(oauth2_scheme),
-    db = Depends(get_session)  # 注入数据库会话
+    session = Depends(get_session)  # 注入数据库会话
 ):
     """通过令牌获取当前用户"""
     credentials_exception = HTTPException(
@@ -41,7 +41,7 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = get_user_by_username(username)
+    user = get_user_by_username(username, session)
     if user is None:
         raise credentials_exception
     return user

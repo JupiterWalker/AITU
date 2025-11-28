@@ -39,6 +39,7 @@ export class LLMService {
         headers: {
           'Content-Type': 'application/json',
           ...options.headers,
+          'Authorization': `${localStorage.getItem('access_token')}`
         },
         ...options,
       });
@@ -122,11 +123,13 @@ interface GraphUpdatePayload {
 }
 
 export class GraphService {
-  static async listGraphs(userId: number): Promise<GraphBasic[]> {
+  static async listGraphs(): Promise<GraphBasic[]> {
     try {
       // 加尾斜杠避免 FastAPI 重定向 /graphs -> /graphs/ 产生混合内容问题
-      const res = await fetch(`${LLM_BASE_URL}/graphs/?user_id=${userId}`, {
-        headers: { 'Content-Type': 'application/json' }
+      const res = await fetch(`${LLM_BASE_URL}/graphs/`, {
+        headers: { 'Content-Type': 'application/json',
+          'Authorization': `${localStorage.getItem('access_token')}`
+         }
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
@@ -139,7 +142,9 @@ export class GraphService {
   static async getGraph(id: number, userId: number): Promise<GraphDetail | null> {
     try {
       const res = await fetch(`${LLM_BASE_URL}/graphs/${id}?user_id=${userId}`, {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json',
+          'Authorization': `${localStorage.getItem('access_token')}`
+        }
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
@@ -154,7 +159,9 @@ export class GraphService {
       // POST 也加尾斜杠避免重定向
       const res = await fetch(`${LLM_BASE_URL}/graphs/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          'Authorization': `${localStorage.getItem('access_token')}`
+         },
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -204,15 +211,15 @@ export class UserService {
     }
   }
 
-  static async updateCredentials(userId: number, user_name: string, password: string): Promise<UserPublic | null> {
+  static async updateCredentials(userId: number, user_name: string, password: string): Promise<string | null> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/users/${userId}/credentials/`, {
+      const res = await fetch(`${LLM_BASE_URL}/users/${userId}/register/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_name, password })
       });
       if (!res.ok) return null;
-      return await res.json();
+      return await res.headers.get('Authorization');
     } catch (e) {
       console.error('更新凭证失败', e);
       return null;
@@ -236,15 +243,16 @@ export class UserService {
     }
   }
 
-  static async login(user_name: string, password: string): Promise<UserPublic | null> {
+  static async login(user_name: string, password: string): Promise<string | null> {
     try {
       const res = await fetch(`${LLM_BASE_URL}/users/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_name, password })
       });
+      console.log('login response:', res);
       if (!res.ok) return null;
-      return await res.json();
+      return res.headers.get('Authorization');
     } catch (e) {
       console.error('登录失败', e);
       return null;

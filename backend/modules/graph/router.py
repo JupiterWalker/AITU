@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 import datetime
 
+from backend.core.security import get_current_user
 from backend.modules.user.models import User
 from .models import Graph
 from .schemas import GraphCreate, GraphUpdate, GraphBasic, GraphDetail
@@ -25,8 +26,8 @@ def _startup():
     init_db()
 
 @router.get("/", response_model=list[GraphBasic])
-def list_graphs(session: Session = Depends(get_session)):
-    items = list(session.exec(select(Graph)))
+def list_graphs(session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
+    items = list(session.exec(select(Graph).where(Graph.owner_id == current_user.id)).all())
     items.sort(key=lambda g: (g.id or 0), reverse=True)
     return [GraphBasic(id=(g.id or 0), title=g.title) for g in items]
 
@@ -39,9 +40,9 @@ def get_graph(graph_id: int, session: Session = Depends(get_session)):
     return GraphDetail(id=(g.id or 0), title=g.title, nodes=nodes, edges=edges, exportedAt=g.exported_at)
 
 @router.post("/", response_model=GraphDetail, status_code=201)
-def create_graph(body: GraphCreate, session: Session = Depends(get_session)):
+def create_graph(body: GraphCreate, session: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
     exported_at = datetime.datetime.utcnow().isoformat()
-    g = Graph(title=body.title, data=pack_graph(body.nodes, body.edges), exported_at=exported_at)
+    g = Graph(title=body.title, data=pack_graph(body.nodes, body.edges), exported_at=exported_at, owner_id=current_user.id)
     session.add(g)
     session.commit()
     session.refresh(g)

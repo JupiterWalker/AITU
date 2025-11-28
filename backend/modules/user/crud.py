@@ -43,7 +43,7 @@ def authenticate_user(username: str, password: str, session: Session):
 def register_user(user: User, user_name: str, password: str, session: Session):
     """注册新用户"""
     user.user_name = user_name
-    user.password = password
+    user.password = hash_password(password)
     # token 置空
     user.ad_token = None
     # 已持久化对象修改后直接 commit 即可；无需 session.add(user)

@@ -20,7 +20,7 @@ except ImportError as e:
         raise
 
 checkpointer = InMemorySaver()
-router = APIRouter(prefix="interaction", tags=["interaction"])
+router = APIRouter(prefix="/interaction", tags=["interaction"])
 
 class AskRequest(BaseModel):
     question: str

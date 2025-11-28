@@ -1,18 +1,27 @@
-# Frontend standalone build and serve by Nginx (static)
+# Multi-stage build: build React app then serve via nginx
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json yarn.lock* ./
+
+# Copy manifest first for dependency install (use frontend/ path)
+COPY frontend/package.json frontend/yarn.lock* ./
 RUN corepack enable && corepack prepare yarn@stable --activate && \
 	if [ -f yarn.lock ]; then yarn install --network-timeout 600000 --immutable; else yarn install --network-timeout 600000; fi
-COPY index.html ./
-COPY tsconfig*.json ./
-COPY tailwind.config.js ./
-COPY postcss.config.cjs ./
-COPY vite.config.ts ./
-COPY public ./public
-COPY src ./src
+
+# Copy remaining sources
+COPY frontend/index.html ./
+COPY frontend/tsconfig*.json ./
+COPY frontend/tailwind.config.js ./
+COPY frontend/postcss.config.cjs ./
+COPY frontend/vite.config.ts ./
+COPY frontend/public ./public
+COPY frontend/src ./src
+
 RUN yarn build
 
-# Export build artifacts via volume mount
-# (docker-compose will mount /app/dist into a named volume consumed by nginx)
-CMD ["sh", "-c", "cp -r dist /export && sleep infinity"]
+FROM nginx:1.27-alpine AS runtime
+WORKDIR /usr/share/nginx/html
+COPY --from=build /app/dist .
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

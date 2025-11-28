@@ -57,7 +57,7 @@ export class LLMService {
 
   static async getLLMResponse(request: LLMRequest): Promise<LLMResponse> {
     try {
-      const response = await this.request<LLMResponse>('/ask', {
+      const response = await this.request<LLMResponse>('/interaction/ask', {
         method: 'POST',
         body: JSON.stringify(request),
       });
@@ -126,7 +126,7 @@ export class GraphService {
   static async listGraphs(): Promise<GraphBasic[]> {
     try {
       // 加尾斜杠避免 FastAPI 重定向 /graphs -> /graphs/ 产生混合内容问题
-      const res = await fetch(`${LLM_BASE_URL}/graphs/`, {
+      const res = await fetch(`${LLM_BASE_URL}/api/v1/graphs/`, {
         headers: { 'Content-Type': 'application/json',
           'Authorization': `${localStorage.getItem('access_token')}`
          }
@@ -141,7 +141,7 @@ export class GraphService {
 
   static async getGraph(id: number, userId: number): Promise<GraphDetail | null> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/graphs/${id}?user_id=${userId}`, {
+      const res = await fetch(`${LLM_BASE_URL}/api/v1/graphs/${id}?user_id=${userId}`, {
         headers: { 'Content-Type': 'application/json',
           'Authorization': `${localStorage.getItem('access_token')}`
         }
@@ -157,7 +157,7 @@ export class GraphService {
   static async createGraph(payload: GraphCreatePayload): Promise<GraphDetail | null> {
     try {
       // POST 也加尾斜杠避免重定向
-      const res = await fetch(`${LLM_BASE_URL}/graphs/`, {
+      const res = await fetch(`${LLM_BASE_URL}/api/v1/graphs/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json',
           'Authorization': `${localStorage.getItem('access_token')}`
@@ -174,7 +174,7 @@ export class GraphService {
 
   static async updateGraph(id: number, payload: GraphUpdatePayload): Promise<boolean> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/graphs/${id}`, {
+      const res = await fetch(`${LLM_BASE_URL}/api/v1/graphs/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -201,7 +201,7 @@ export interface UserPublic {
 export class UserService {
   static async getUserIdByToken(token: string): Promise<number | null> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/users/token/${encodeURIComponent(token)}`);
+      const res = await fetch(`${LLM_BASE_URL}/api/v1/users/token/${encodeURIComponent(token)}`);
       if (!res.ok) return null;
       const data = await res.json();
       return data.id ?? null;
@@ -213,7 +213,7 @@ export class UserService {
 
   static async updateCredentials(userId: number, user_name: string, password: string): Promise<string | null> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/users/${userId}/register/`, {
+      const res = await fetch(`${LLM_BASE_URL}/api/v1/users/${userId}/register/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_name, password })
@@ -230,7 +230,7 @@ export class UserService {
     try {
       const body: any = { user_name, password };
       if (token) body.ad_token = token;
-      const res = await fetch(`${LLM_BASE_URL}/users/`, {
+      const res = await fetch(`${LLM_BASE_URL}/api/v1/users/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -245,7 +245,7 @@ export class UserService {
 
   static async login(user_name: string, password: string): Promise<string | null> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/users/login/`, {
+      const res = await fetch(`${LLM_BASE_URL}/api/v1/users/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_name, password })

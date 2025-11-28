@@ -1,23 +1,15 @@
-from __future__ import annotations
+import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-import datetime
 
-from backend.core.security import get_current_user
-from backend.modules.user.models import User
-from .models import Graph
-from .schemas import GraphCreate, GraphUpdate, GraphBasic, GraphDetail
-# Import db utilities; distinguish between package context and direct script run.
-try:
-    from ...db import init_db, get_session  # package context (backend.modules.graph)
-except ImportError as e:
-    # Only fallback when it's a relative import issue (no parent package); otherwise re-raise original error
-    msg = repr(e)
-    if ("attempted relative import" in msg) or ("parent package" in msg):
-        from db import init_db, get_session  # type: ignore
-    else:
-        raise
-from .utils import pack_graph, unpack_graph
+from backend.app.schemas.graph import GraphBasic, GraphCreate, GraphDetail, GraphUpdate
+from backend.app.db.session import get_session
+from backend.app.models.graph import Graph
+from backend.app.models.user import User
+from backend.app.db.base import init_db
+from backend.app.core.security import get_current_user
+from backend.app.utils.graph_utils import pack_graph, unpack_graph
+
 
 router = APIRouter(prefix="/graphs", tags=["graphs"])
 

@@ -1,6 +1,10 @@
 from __future__ import annotations
 from sqlmodel import SQLModel, Field
-from .models import UserPublic as UserPublicModel, UserCreate as UserCreateModel, UserCredentialUpdate as UserCredentialUpdateModel
+from ..models.user import (
+    UserPublic as UserPublicModel,
+    UserCreate as UserCreateModel,
+    UserCredentialUpdate as UserCredentialUpdateModel,
+)
 
 class UserPublic(UserPublicModel):
     pass

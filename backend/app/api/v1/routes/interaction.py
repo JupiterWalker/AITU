@@ -5,11 +5,13 @@ from pydantic import BaseModel
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 
-from backend.core.security import get_current_user
-from backend.modules.user.models import User
+from backend.app.core.security import get_current_user
+from backend.app.models.user import User
+
+
 
 try:
-    from ...llm.model import SiliconFlowChatModel
+    from backend.app.llm.model import SiliconFlowChatModel
 except ImportError as e:
     msg = repr(e)
     if ("attempted relative import" in msg) or ("parent package" in msg):

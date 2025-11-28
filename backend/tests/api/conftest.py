@@ -1,15 +1,10 @@
 import os
-import tempfile
 from pathlib import Path
 from typing import Generator
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
-
-# Import app and get_session after setting DATABASE_URL in each test to avoid global engine reuse
-from ..main import app
-from ..db import get_session
 
 
 @pytest.fixture(autouse=True)
@@ -23,7 +18,7 @@ def isolated_sqlite_db(tmp_path: Path) -> Generator[None, None, None]:
     """
     db_file = tmp_path / "test.db"
     sqlite_url = f"sqlite:///{db_file}"
-    # Point the app to this temp DB
+    # Point the app to this temp DB (set before importing app/deps)
     os.environ["DATABASE_URL"] = sqlite_url
 
     # Create a dedicated engine for the test
@@ -32,11 +27,15 @@ def isolated_sqlite_db(tmp_path: Path) -> Generator[None, None, None]:
     db_file.parent.mkdir(parents=True, exist_ok=True)
     SQLModel.metadata.create_all(engine)
 
-    def _override_session() -> Generator[Session, None, None]:
+    # Import app and dependency after DATABASE_URL is set, and override the router dependency
+    from backend.app.main import app
+    from backend.app.api.deps import get_db
+
+    def _override_get_db() -> Generator[Session, None, None]:
         with Session(engine) as s:
             yield s
 
-    app.dependency_overrides[get_session] = _override_session
+    app.dependency_overrides[get_db] = _override_get_db
 
     try:
         yield
@@ -45,7 +44,15 @@ def isolated_sqlite_db(tmp_path: Path) -> Generator[None, None, None]:
         try:
             SQLModel.metadata.drop_all(engine)
         finally:
-            app.dependency_overrides.pop(get_session, None)
+            # Ensure engine connections are closed before deleting file
+            try:
+                engine.dispose()
+            except Exception:
+                pass
+            try:
+                app.dependency_overrides.pop(get_db, None)
+            except Exception:
+                pass
             if db_file.exists():
                 try:
                     db_file.unlink()
@@ -56,4 +63,5 @@ def isolated_sqlite_db(tmp_path: Path) -> Generator[None, None, None]:
 @pytest.fixture
 def client() -> TestClient:
     """Provide a TestClient bound to the isolated DB for convenience."""
+    from backend.app.main import app
     return TestClient(app)

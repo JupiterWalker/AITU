@@ -4,8 +4,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from ..db import get_session
-from ..modules.user.crud import get_user_by_username
+from backend.app.crud.user import get_user_by_username
+from backend.app.db.session import get_session
+
 
 SECRET_KEY = "IloveGinJin"
 ALGORITHM = "HS256"

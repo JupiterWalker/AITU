@@ -33,7 +33,8 @@ export default function HomePage() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const list = await GraphService.listGraphs();
+      const userId = Number(cachedId);
+      const list = await GraphService.listGraphs(userId);
       if (!cancelled) {
         setGraphs(list);
         setLoading(false);
@@ -86,7 +87,7 @@ export default function HomePage() {
               setShowLogin(false);
               (async () => {
                 setLoading(true);
-                const list = await GraphService.listGraphs();
+                const list = await GraphService.listGraphs(id);
                 setGraphs(list);
                 setLoading(false);
               })();

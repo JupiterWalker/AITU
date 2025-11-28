@@ -122,10 +122,10 @@ interface GraphUpdatePayload {
 }
 
 export class GraphService {
-  static async listGraphs(): Promise<GraphBasic[]> {
+  static async listGraphs(userId: number): Promise<GraphBasic[]> {
     try {
       // 加尾斜杠避免 FastAPI 重定向 /graphs -> /graphs/ 产生混合内容问题
-      const res = await fetch(`${LLM_BASE_URL}/graphs/`, {
+      const res = await fetch(`${LLM_BASE_URL}/graphs/?user_id=${userId}`, {
         headers: { 'Content-Type': 'application/json' }
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -136,9 +136,9 @@ export class GraphService {
     }
   }
 
-  static async getGraph(id: number): Promise<GraphDetail | null> {
+  static async getGraph(id: number, userId: number): Promise<GraphDetail | null> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/graphs/${id}`, {
+      const res = await fetch(`${LLM_BASE_URL}/graphs/${id}?user_id=${userId}`, {
         headers: { 'Content-Type': 'application/json' }
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

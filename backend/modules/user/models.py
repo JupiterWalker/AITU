@@ -14,7 +14,8 @@ class User(UserBase, table=True):
 
 class UserPublic(UserBase):
     id: int
-    ad_token: str | None = None
+    access_token: str | None = None
+    token_type: str | None = None
 
 class UserCreate(UserBase):
     password: str

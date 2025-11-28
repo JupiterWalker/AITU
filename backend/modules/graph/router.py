@@ -2,6 +2,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 import datetime
+
+from backend.modules.user.models import User
 from .models import Graph
 from .schemas import GraphCreate, GraphUpdate, GraphBasic, GraphDetail
 # Import db utilities; distinguish between package context and direct script run.

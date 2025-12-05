@@ -125,8 +125,13 @@ export default function HomePage() {
             )}
           </div>
         )}
-        {/* 独立 Slogan 置于上方 */}
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 text-center px-4">
+        {/* 顶部 LOGO + Slogan */}
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 text-center px-4 flex flex-col items-center gap-3">
+          <img
+            src="LOGO.png"
+            alt="AITU Logo"
+            className="w-20 h-20 object-contain drop-shadow"
+          />
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-transparent bg-clip-text drop-shadow-sm">
             A.I. Thought Universe
           </h2>

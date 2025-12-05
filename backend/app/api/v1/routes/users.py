@@ -15,7 +15,8 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/token/{token}", response_model=UserTokenLookup)
 def get_user_id_by_token(token: str, session: Session = Depends(get_db)):
-    user = session.exec(select(User).where(User.ad_token == token)).first()
+    cleaned_token = token.strip()
+    user = session.exec(select(User).where(User.ad_token == cleaned_token)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return UserTokenLookup(id=user.id or 0)

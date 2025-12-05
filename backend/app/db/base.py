@@ -3,7 +3,7 @@ from sqlmodel import SQLModel, create_engine, Session
 from pathlib import Path
 import os
 
-DB_PATH = Path(__file__).parent / 'data' / 'graphs.db'
+DB_PATH = Path(__file__).parent.parent.parent / 'data' / 'graphs.db'
 _default_sqlite_url = f'sqlite:///{DB_PATH}'
 # _default_postgresql_url = "postgresql+psycopg://aitu:aitu123@localhost:5432/aitu_dev"
 
@@ -14,7 +14,7 @@ _is_sqlite = DATABASE_URL.startswith("sqlite")
 
 # 环境化配置，便于线上 PostgreSQL 调优
 _env = os.getenv
-ECHO = _env("DB_ECHO", "false").lower() == "true"
+ECHO = True if _is_sqlite else False
 POOL_SIZE = int(_env("DB_POOL_SIZE", "10" if _is_sqlite else "5"))
 MAX_OVERFLOW = int(_env("DB_MAX_OVERFLOW", "20" if _is_sqlite else "10"))
 POOL_RECYCLE = int(_env("DB_POOL_RECYCLE", "1800"))  # 30min recycle 防止僵尸连接

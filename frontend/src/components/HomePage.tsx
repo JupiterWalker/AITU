@@ -128,7 +128,7 @@ export default function HomePage() {
         {/* 顶部 LOGO + Slogan */}
         <div className="absolute top-14 left-1/2 -translate-x-1/2 text-center px-4 flex flex-col items-center gap-3">
           <img
-            src="LOGO.png"
+            src="/LOGO.png"
             alt="AITU Logo"
             className="w-20 h-20 object-contain drop-shadow"
           />

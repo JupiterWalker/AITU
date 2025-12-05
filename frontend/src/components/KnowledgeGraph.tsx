@@ -78,13 +78,13 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
     const toolboxElRef = useRef<HTMLDivElement | null>(null);
     // const [hasSubmitted, setHasSubmitted] = useState(false);
 
-    const bootstrappedRef = useRef(false);
+    // const bootstrappedRef = useRef(false);
     useEffect(() => {
         console.log('✅ 组件挂载完成');
-        bootstrappedRef.current = false;
+        // bootstrappedRef.current = false;
         return () => {
           console.log('❌ 组件即将卸载');
-          bootstrappedRef.current = true;
+          // bootstrappedRef.current = true;
         };
     }, []);
 
@@ -101,6 +101,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
     // ★ NEW: 首次挂载：如有 prefillGraph 则直接载入
     useEffect(() => {
       if (graphId !== null) return; // 已存在
+      if (HL_DEBUG) console.log('[graph] graphId=null，检查 prefillGraph:', prefillGraph);
       if (prefillGraph) {
         try {
           const { nodes: pNodes, edges: pEdges, id } = prefillGraph;
@@ -108,8 +109,8 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
           setEdges(pEdges as any);
           setGraphId(id);
           if (HL_DEBUG) console.log('[graph] 已载入已有图 id=', id, ' nodes=', pNodes.length, ' edges=', pEdges.length);
-          if (bootstrapQuestion && !bootstrappedRef.current) {
-            bootstrappedRef.current = true;
+          if (bootstrapQuestion && sessionStorage.getItem(`graph_inited`) === 'false') {
+            sessionStorage.setItem(`graph_inited`, 'true');
             // 直接使用覆盖参数，避免依赖 state 更新时序
             handleInputSubmit(bootstrapQuestion);
           }

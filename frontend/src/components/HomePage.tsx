@@ -22,6 +22,8 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
+  sessionStorage.setItem(`graph_inited`, 'false');
+  
   useEffect(() => {
     // 初次进入检查是否已有登录缓存
   const cachedToken = localStorage.getItem('access_token');

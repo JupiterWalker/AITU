@@ -139,9 +139,9 @@ export class GraphService {
     }
   }
 
-  static async getGraph(id: number, userId: number): Promise<GraphDetail | null> {
+  static async getGraph(id: number): Promise<GraphDetail | null> {
     try {
-      const res = await fetch(`${LLM_BASE_URL}/api/v1/graphs/${id}?user_id=${userId}`, {
+      const res = await fetch(`${LLM_BASE_URL}/api/v1/graphs/${id}`, {
         headers: { 'Content-Type': 'application/json',
           'Authorization': `${localStorage.getItem('access_token')}`
         }

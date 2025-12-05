@@ -63,7 +63,7 @@ export default function GraphPage() {
           onRegisterApi={(api) => { graphApiRef.current = api; }}
         />
       </ReactFlowProvider>
-      <div style={{position:'absolute', top:12, left:12, zIndex:1000}}>
+      {/* <div style={{position:'absolute', top:12, left:12, zIndex:1000}}>
         <button
           onClick={() => setMenuOpen(o => !o)}
           style={{
@@ -88,7 +88,7 @@ export default function GraphPage() {
             <div style={{padding:'6px 14px', cursor:'pointer', fontSize:14}} role="menuitem" onClick={() => { navigate('/'); }}>返回首页</div>
           </div>
         )}
-      </div>
+      </div> */}
       <input ref={fileInputRef} type="file" accept="application/json" style={{display:'none'}} onChange={handleFileSelected} />
     </div>
   );

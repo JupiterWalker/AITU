@@ -12,10 +12,12 @@
   width: 250px;
   user-select: text;
   cursor: text;
+  border-color: rgb(79, 70, 229);
 }
 
 .markdown-node--selected {
-  box-shadow: 0 2px 20px rgba(24, 144, 255, 0.35);
+  box-shadow: 0 2px 20px rgb(219, 39, 119, 0.35);
+  border-color: rgb(219, 39, 119);
 }
 
 .drag-handle__custom {
@@ -25,7 +27,7 @@
   cursor: grab;
   font-size: 14px;
   line-height: 16px;
-  color: rgba(1, 149, 252, 0.77);
+  color: rgb(147, 51, 234);
   text-align: center;
   vertical-align: top;
   position: absolute;
@@ -47,7 +49,7 @@
 
 /* components/KnowlegeGraph.css —— 追加 */
 :root {
-  --kg-q-color: #1353dd;
+  --kg-q-color: rgb(79, 70, 229);
   --kg-q-weight: 700; /* 600/700 视视觉设计 */
   --kg-q-size: 14px;
   --kg-q-line: 1.5;

@@ -678,7 +678,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
                     <MiniMap position="top-right"/>
                     <Controls/>
                     <Background/>
-                    <Panel position="top-right">
+                    {/* <Panel position="top-right">
                         <select
                           className="xy-theme__select"
                           onChange={onChange}
@@ -688,7 +688,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
                           <option value="light">light</option>
                           <option value="system">system</option>
                         </select>
-                      </Panel>
+                      </Panel> */}
                 </ReactFlow>
             </div>
             <ChatBox

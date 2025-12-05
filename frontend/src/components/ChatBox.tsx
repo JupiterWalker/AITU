@@ -58,7 +58,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         <div className="flex gap-2">
           <textarea
               rows={3}
-              className="flex-1 border border-gray-200 bg-white rounded-2xl px-4 py-3 text-base shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:outline-none transition resize-none min-h-[48px]"
+              className="flex-1 border border-gray-200 bg-white rounded-2xl px-4 py-3 text-base shadow focus:border-pink-600 focus:ring-2 focus:ring-pink-100 focus:outline-none transition resize-none min-h-[48px]"
               placeholder={t('enterChildNode', { defaultValue: '请输入新的子节点内容...' })}
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
@@ -73,7 +73,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           <button
               type="submit"
               disabled={!inputValue.trim()}
-              className="ml-1 h-[48px] px-6 bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 active:scale-95 text-white rounded-2xl shadow transition-all font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ml-1 h-[48px] px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-95 text-white rounded-2xl shadow transition-all font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('add', { defaultValue: '添加' })}
           </button>

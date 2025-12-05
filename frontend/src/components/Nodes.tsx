@@ -11,12 +11,14 @@ import type { CustomNodeProps } from "./Interface.tsx";
 import {
     Position
 } from '@xyflow/react';
-import rehypeWrapQuestion from '../markdown-plugins/rehypeWrapQuestion.ts';
 import { QuestionLabel } from './QuestionLabel.tsx';
+import { useTranslation } from "react-i18next";
 
 
 // ★ CHANGED: 核心节点组件 —— 在节点内部计算选区偏移，并通过 data.onLabelMouseUp 往外抛
 const CoreMarkdownNode = React.memo(({ data, selected, id }: CustomNodeProps) => {
+  const { t } = useTranslation();
+
   console.log('选中内容', { data: data })
   // 仅包裹 Markdown 渲染区域，避免“☰”等额外文本影响偏移
   const contentRef = useRef<HTMLDivElement>(null);
@@ -97,7 +99,7 @@ const CoreMarkdownNode = React.memo(({ data, selected, id }: CustomNodeProps) =>
     : '';
 
     const referenceContext = data.referenceContext
-      ? `> 问题背景: \n${data.referenceContext}\n`
+      ? `> ${t('questionBackground')}: \n${data.referenceContext}\n`
       : '';
 
 

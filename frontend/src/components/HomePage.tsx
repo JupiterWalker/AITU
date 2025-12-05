@@ -10,6 +10,8 @@ import LoginModal from './LoginModal';
 // 静态首页，含居中标题、输入框占位、下方四个骨架卡片
 // 使用 Tailwind（项目已集成）来快速布局与灰色占位样式。
 // 后续可以将搜索/问题输入逻辑接入真正的业务；当前仅静态展示。
+import { useTranslation } from 'react-i18next';
+
 export default function HomePage() {
   const [value, setValue] = useState('');
   const [graphs, setGraphs] = useState<GraphBasic[]>([]);
@@ -18,6 +20,7 @@ export default function HomePage() {
   const [userName, setUserName] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     // 初次进入检查是否已有登录缓存
@@ -103,7 +106,7 @@ export default function HomePage() {
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white text-sm font-semibold">
                 {userName.slice(0,1).toUpperCase()}
               </div>
-              <span className="text-sm text-gray-700">你好, {userName}</span>
+              <span className="text-sm text-gray-700">{t('hello', { defaultValue: '你好' })}, {userName}</span>
               <svg className={`w-4 h-4 text-gray-500 transition-transform ${menuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
               </svg>
@@ -120,7 +123,7 @@ export default function HomePage() {
                     setMenuOpen(false);
                     setShowLogin(true);
                   }}
-                >退出登录</button>
+                >{t('logout', { defaultValue: '退出登录' })}</button>
               </div>
             )}
           </div>
@@ -133,21 +136,25 @@ export default function HomePage() {
             className="w-20 h-20 object-contain drop-shadow"
           />
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-transparent bg-clip-text drop-shadow-sm">
-            A.I. Thought Universe
+            {t('sloganTitle')}
           </h2>
           <p className="mt-2 text-sm md:text-base text-gray-500 font-medium">
-            — Powered by <span className="text-indigo-600 font-semibold">AI</span>, Designed for <span className="text-pink-600 font-semibold">Humans</span>.
+            {t('poweredByPrefix')} <span className="text-indigo-600 font-semibold">{t('AI')}</span>{t('poweredByAffix')}, {t('designedForPrefix')}<span className="text-pink-600 font-semibold">{t('Humans')}{t('designedForAffix')}</span>.
           </p>
+          <div className="mt-2 flex gap-2">
+            <button className="px-3 py-1 text-xs rounded border" onClick={() => { i18n.changeLanguage('zh'); localStorage.setItem('lang','zh'); }}>中文</button>
+            <button className="px-3 py-1 text-xs rounded border" onClick={() => { i18n.changeLanguage('en'); localStorage.setItem('lang','en'); }}>English</button>
+          </div>
         </div>
         {/* 中间标题与输入框 */}
-        <div className="flex flex-col items-center w-full px-4">
+        <div className="flex flex-col items-center w-full px-4 mt-32">
           <h1 className="text-2xl font-medium text-gray-700 mb-10 tracking-wide">
-            今天我们探索什么？
+            {t('welcomeQuestion')}
           </h1>
 
           <input
             className="w-[36rem] h-20 border border-gray-300 rounded-md px-6 text-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            placeholder="输入你的问题并回车..."
+            placeholder={t('inputPlaceholder')}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -157,7 +164,7 @@ export default function HomePage() {
         {/* 骨架区域 / 图列表 */}
   <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mt-24 w-full px-12">
           {(loading ? Array.from({ length: 4 }) : graphs).map((item: any, i) => {
-            const title = loading ? '加载中…' : item.title;
+            const title = loading ? t('loading', { defaultValue: '加载中…' }) : item.title;
             return (
               <div
                 key={loading ? i : item.id}
@@ -188,7 +195,7 @@ export default function HomePage() {
             );
           })}
           {!showLogin && !loading && graphs.length === 0 && (
-            <div className="col-span-full text-center text-gray-400">暂无探索图，创建第一个问题开始吧。</div>
+            <div className="col-span-full text-center text-gray-400">{t('noGraphs')}</div>
           )}
         </div>
       </div>

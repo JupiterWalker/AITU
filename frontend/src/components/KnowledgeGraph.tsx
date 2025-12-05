@@ -19,6 +19,7 @@ getAllowedTextFromNode} from '../utils/markdownHighlightUtils.tsx';
 import { MarkdownNode, BranchMarkdownNode } from './Nodes.tsx';
 // 扩展节点运行期数据，避免 TS 对额外字段报错
 import type { Node } from '@xyflow/react';
+import { useTranslation } from 'react-i18next';
 
 export const HL_DEBUG = true; // 开关：如需禁用日志，设为 false
 
@@ -59,7 +60,9 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
   const [contextNode, setContextNode] = useState(initialNode);
   const [contextText, setContextText] = useState('');
   const [graphId, setGraphId] = useState<number | null>(null);
-  const graphTitleRef = useRef<string>('新探索图');
+
+  const { t } = useTranslation();
+
     // ★ 新增：在组件顶部声明一个 ref 存最近一次 context 高亮信息
   const lastContextHLRef = useRef<{ nodeId: string; start: number; end: number; text: string; scope?: { qaIndex: number; field: 'question'|'answer' } } | null>(null);
     // ★ CHANGED: 扩展 selectionRef，加入 offsets
@@ -258,10 +261,10 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
           ];
           let parts = []
           if(referenceContext) {
-            parts.push(`> 问题背景: \n${referenceContext}\n`)
+            parts.push(`> ${t('questionBackground')}: \n${referenceContext}\n`)
             parts.push("---\n")}
           else if (node && node.data && node.data.referenceContext) {
-            parts.push(`> 问题背景: \n${node.data.referenceContext}\n`)
+            parts.push(`> ${t('questionBackground')}: \n${node.data.referenceContext}\n`)
             parts.push("---\n")
           }
         // 只保留 LLM 原生 markdown
@@ -324,7 +327,7 @@ export default function KnowledgeGraph({ onGraphExport, onGraphImport, onRegiste
       if (contextText) {
         console.log('contextText 存在，准备构建带上下文的问题');
         const oldQ = (contextNode as any).data.context?.[selectionRef.current?.scope?.qaIndex]?.question || '';
-        const referenceContext = `我想进一步了解 关于我刚才问你 “${oldQ}” 时你提到的 “${contextText}”`;
+        const referenceContext = `${t('contextPrefix')} “${oldQ}” ${t('contextAffix')} “${contextText}”`;
         optQ = `${referenceContext}: ${q}` + "\n\n";
         const newNodeId = addNewNodeAfterAsk(contextNode, q, true, referenceContext);
         const threadId = prefillGraph?.id + "-" + newNodeId;
